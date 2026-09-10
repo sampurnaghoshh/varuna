@@ -1,3 +1,96 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  html,
+  body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  body {
+    @apply bg-sea-abyss text-ink font-sans text-base antialiased;
+  }
+
+  /* Instrument readouts must not reflow as digits change. */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum" 1;
+  }
+
+  :focus-visible {
+    outline: 2px solid theme("colors.survey");
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* Chart annotation box: hairline, near-square, no drop shadow. */
+  .panel {
+    @apply rounded-chart border border-chart-line/70 bg-sea-deep/85 backdrop-blur-md;
+  }
+
+  .rule {
+    @apply border-chart-line/60;
+  }
+
+  .scrollable {
+    scrollbar-width: thin;
+    scrollbar-color: theme("colors.chart.edge") transparent;
+  }
+
+  .scrollable::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+  }
+
+  .scrollable::-webkit-scrollbar-thumb {
+    background: theme("colors.chart.edge");
+    border-radius: 4px;
+  }
+
+  .scrollable::-webkit-scrollbar-track {
+    background: transparent;
+  }
+}
+
+/* The one orchestrated moment: the culprit igniting at t*. */
+@keyframes ignite {
+  0% {
+    box-shadow: 0 0 0 0 theme("colors.hazard" / 55%);
+  }
+  70% {
+    box-shadow: 0 0 0 9px theme("colors.hazard" / 0%);
+  }
+  100% {
+    box-shadow: 0 0 0 0 theme("colors.hazard" / 0%);
+  }
+}
+
+.igniting {
+  animation: ignite 1.6s ease-out 3;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .igniting {
+    animation: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* MapLibre ships control chrome we do not use; the canvas is all we want. */
+.maplibregl-ctrl-attrib,
+.maplibregl-ctrl-logo {
+  display: none !important;
+}
