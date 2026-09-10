@@ -1,0 +1,607 @@
+{
+  "verdict": "MODERATE",
+  "issued": true,
+  "culprit_mmsi": 220517000,
+  "windage": 0.04,
+  "n_vessels_in_frame": 23,
+  "n_ranked": 11,
+  "frame_size_note": "The E1 term is a ratio against what an average vessel in THIS frame scores, so achievable LR scales with log N. Quote this N with the LR (§12).",
+  "background": {
+    "s1_bg": 0.090909,
+    "s2_bg": 0.242872,
+    "s3_bg": 0.794215
+  },
+  "none_of_the_above_posterior": 0.126865,
+  "decision_bands": {
+    "MODERATE": "LR >= 10",
+    "STRONG": "LR >= 100"
+  },
+  "candidates": [
+    {
+      "rank": 1,
+      "mmsi": 220517000,
+      "name": "NORD ASTRAEA",
+      "log_lr": 4.116224,
+      "lr": 61.3272,
+      "posterior": 0.77803,
+      "verdict": "MODERATE",
+      "prior": 2.915493,
+      "terms_nats": {
+        "s1": 1.205541,
+        "s2": 0.990483,
+        "s3": 0.061703,
+        "s4": 0.788457,
+        "prior": 1.070039
+      },
+      "channels": {
+        "mmsi": 220517000,
+        "s1": 0.303506,
+        "s2": 0.999757,
+        "s3": 0.898531,
+        "s4": 2.2,
+        "mass": 0.001257717,
+        "t_star": "2024-03-13T21:10:00+00:00",
+        "stretch_factor": 1.0,
+        "unavailable": {}
+      }
+    },
+    {
+      "rank": 2,
+      "mmsi": 219018273,
+      "name": "KATTEGAT TRADER",
+      "log_lr": 1.698443,
+      "lr": 5.4654,
+      "posterior": 0.069337,
+      "verdict": "UNATTRIBUTED",
+      "prior": 0.971831,
+      "terms_nats": {
+        "s1": 0.893617,
+        "s2": 0.783193,
+        "s3": 0.050207,
+        "s4": 0.0,
+        "prior": -0.028573
+      },
+      "channels": {
+        "mmsi": 219018273,
+        "s1": 0.222177,
+        "s2": 0.743511,
+        "s3": 0.878106,
+        "s4": 1.0,
+        "mass": 0.000920695,
+        "t_star": "2024-03-13T21:40:00+00:00",
+        "stretch_factor": 1.0,
+        "unavailable": {}
+      }
+    },
+    {
+      "rank": 3,
+      "mmsi": 261019400,
+      "name": "GRYF",
+      "log_lr": -0.0635,
+      "lr": 0.9385,
+      "posterior": 0.011906,
+      "verdict": "UNATTRIBUTED",
+      "prior": 0.647887,
+      "terms_nats": {
+        "s1": 0.288259,
+        "s2": 0.569565,
+        "s3": -0.487286,
+        "s4": 0.0,
+        "prior": -0.434038
+      },
+      "channels": {
+        "mmsi": 261019400,
+        "s1": 0.121282,
+        "s2": 0.547959,
+        "s3": 0.2997,
+        "s4": 1.0,
+        "mass": 0.000502589,
+        "t_star": "2024-03-13T19:10:00+00:00",
+        "stretch_factor": 1.0,
+        "unavailable": {}
+      }
+    },
+    {
+      "rank": 4,
+      "mmsi": 219004521,
+      "name": "ESBJERG STAR",
+      "log_lr": -0.099358,
+      "lr": 0.9054,
+      "posterior": 0.011487,
+      "verdict": "UNATTRIBUTED",
+      "prior": 0.971831,
+      "terms_nats": {
+        "s1": 0.297099,
+        "s2": -0.429587,
+        "s3": 0.061703,
+        "s4": 0.0,
+        "prior": -0.028573
+      },
+      "channels": {
+        "mmsi": 219004521,
+        "s1": 0.122359,
+        "s2": 0.131478,
+        "s3": 0.898531,
+        "s4": 1.0,
+        "mass": 0.000507051,
+        "t_star": "2024-03-13T21:10:00+00:00",
+        "stretch_factor": 1.0,
+        "unavailable": {}
+      }
+    },
+    {
+      "rank": 5,
+      "mmsi": 265611000,
+      "name": "SVEA HORIZON",
+      "log_lr": -1.789433,
+      "lr": 0.1671,
+      "posterior": 0.002119,
+      "verdict": "UNATTRIBUTED",
+      "prior": 0.971831,
+      "terms_nats": {
+        "s1": -1.656804,
+        "s2": -0.184352,
+        "s3": 0.080297,
+        "s4": 0.0,
+        "prior": -0.028573
+      },
+      "channels": {
+        "mmsi": 265611000,
+        "s1": 0.017341,
+        "s2": 0.186639,
+        "s3": 0.932573,
+        "s4": 1.0,
+        "mass": 7.1859e-05,
+        "t_star": "2024-03-13T22:10:00+00:00",
+        "stretch_factor": 1.0,
+        "unavailable": {}
+      }
+    },
+    {
+      "rank": 6,
+      "mmsi": 220611000,
+      "name": "SKAGEN PROVIDER",
+      "log_lr": -4.046927,
+      "lr": 0.0175,
+      "posterior": 0.000222,
+      "verdict": "UNATTRIBUTED",
+      "prior": 0.971831,
+      "terms_nats": {
+        "s1": 0.39894,
+        "s2": -4.402115,
+        "s3": -0.015179,
+        "s4": 0.0,
+        "prior": -0.028573
+      },
+      "channels": {
+        "mmsi": 220611000,
+        "s1": 0.135477,
+        "s2": 0.000451,
+        "s3": 0.770467,
+        "s4": 1.0,
+        "mass": 0.000561411,
+        "t_star": "2024-03-13T20:10:00+00:00",
+        "stretch_factor": 1.0,
+        "unavailable": {}
+      }
+    },
+    {
+      "rank": 7,
+      "mmsi": 219221000,
+      "name": "NORDSOEN",
+      "log_lr": -6.317859,
+      "lr": 0.0018,
+      "posterior": 2.3e-05,
+      "verdict": "UNATTRIBUTED",
+      "prior": 0.647887,
+      "terms_nats": {
+        "s1": -0.405986,
+        "s2": -5.077991,
+        "s3": -0.399844,
+        "s4": 0.0,
+        "prior": -0.434038
+      },
+      "channels": {
+        "mmsi": 219221000,
+        "s1": 0.060574,
+        "s2": 0.000172,
+        "s3": 0.356975,
+        "s4": 1.0,
+        "mass": 0.000251018,
+        "t_star": "2024-03-13T20:10:00+00:00",
+        "stretch_factor": 1.0,
+        "unavailable": {}
+      }
+    },
+    {
+      "rank": 8,
+      "mmsi": 265520000,
+      "name": "MALMO LINK",
+      "log_lr": -7.338548,
+      "lr": 0.0006,
+      "posterior": 8e-06,
+      "verdict": "UNATTRIBUTED",
+      "prior": 0.323944,
+      "terms_nats": {
+        "s1": -5.304204,
+        "s2": -1.021888,
+        "s3": 0.11473,
+        "s4": 0.0,
+        "prior": -1.127186
+      },
+      "channels": {
+        "mmsi": 265520000,
+        "s1": 0.000452,
+        "s2": 0.056413,
+        "s3": 0.99906,
+        "s4": 1.0,
+        "mass": 1.873e-06,
+        "t_star": "2024-03-13T22:10:00+00:00",
+        "stretch_factor": 1.0,
+        "unavailable": {}
+      }
+    },
+    {
+      "rank": 9,
+      "mmsi": 211447910,
+      "name": "HANSA BALTICA",
+      "log_lr": -8.988225,
+      "lr": 0.0001,
+      "posterior": 2e-06,
+      "verdict": "UNATTRIBUTED",
+      "prior": 0.971831,
+      "terms_nats": {
+        "s1": -4.314214,
+        "s2": -4.752698,
+        "s3": 0.10726,
+        "s4": 0.0,
+        "prior": -0.028573
+      },
+      "channels": {
+        "mmsi": 211447910,
+        "s1": 0.001216,
+        "s2": 0.000273,
+        "s3": 0.984244,
+        "s4": 1.0,
+        "mass": 5.039e-06,
+        "t_star": "2024-03-13T21:40:00+00:00",
+        "stretch_factor": 1.0,
+        "unavailable": {}
+      }
+    },
+    {
+      "rank": 10,
+      "mmsi": 211672400,
+      "name": "KIEL MERCHANT",
+      "log_lr": -9.588863,
+      "lr": 0.0001,
+      "posterior": 1e-06,
+      "verdict": "UNATTRIBUTED",
+      "prior": 0.971831,
+      "terms_nats": {
+        "s1": -1.761591,
+        "s2": -7.803287,
+        "s3": 0.004588,
+        "s4": 0.0,
+        "prior": -0.028573
+      },
+      "channels": {
+        "mmsi": 211672400,
+        "s1": 0.015616,
+        "s2": 3e-06,
+        "s3": 0.801536,
+        "s4": 1.0,
+        "mass": 6.471e-05,
+        "t_star": "2024-03-13T23:40:00+00:00",
+        "stretch_factor": 1.0,
+        "unavailable": {}
+      }
+    },
+    {
+      "rank": 11,
+      "mmsi": 211539200,
+      "name": "WARNOW TRADER",
+      "log_lr": -14.101037,
+      "lr": 0.0,
+      "posterior": 0.0,
+      "verdict": "UNATTRIBUTED",
+      "prior": 0.971831,
+      "terms_nats": {
+        "s1": -11.417615,
+        "s2": -2.726528,
+        "s3": 0.07168,
+        "s4": 0.0,
+        "prior": -0.028573
+      },
+      "channels": {
+        "mmsi": 211539200,
+        "s1": 0.0,
+        "s2": 0.004941,
+        "s3": 0.916639,
+        "s4": 1.0,
+        "mass": 0.0,
+        "t_star": "2024-03-13T20:40:00+00:00",
+        "stretch_factor": 1.0,
+        "unavailable": {}
+      }
+    }
+  ],
+  "unrankable": [
+    {
+      "mmsi": 211288610,
+      "name": "RUGEN CARRIER",
+      "reason": "insufficient evidence",
+      "verdict": "UNATTRIBUTED",
+      "channels": {
+        "mmsi": 211288610,
+        "s1": 0.0,
+        "s2": null,
+        "s3": null,
+        "s4": null,
+        "mass": 0.0,
+        "t_star": null,
+        "stretch_factor": null,
+        "unavailable": {
+          "s2": "no vessel overlaps the reconstructed origin",
+          "s3": "no vessel overlaps the reconstructed origin",
+          "s4": "no vessel overlaps the reconstructed origin",
+          "t_star": "no vessel overlaps the reconstructed origin",
+          "stretch_factor": "no vessel overlaps the reconstructed origin"
+        }
+      }
+    },
+    {
+      "mmsi": 211804500,
+      "name": "LUEBECK STAR",
+      "reason": "insufficient evidence",
+      "verdict": "UNATTRIBUTED",
+      "channels": {
+        "mmsi": 211804500,
+        "s1": 0.0,
+        "s2": null,
+        "s3": null,
+        "s4": null,
+        "mass": 0.0,
+        "t_star": null,
+        "stretch_factor": null,
+        "unavailable": {
+          "s2": "no vessel overlaps the reconstructed origin",
+          "s3": "no vessel overlaps the reconstructed origin",
+          "s4": "no vessel overlaps the reconstructed origin",
+          "t_star": "no vessel overlaps the reconstructed origin",
+          "stretch_factor": "no vessel overlaps the reconstructed origin"
+        }
+      }
+    },
+    {
+      "mmsi": 219170000,
+      "name": "BORNHOLM SUPPLIER",
+      "reason": "insufficient evidence",
+      "verdict": "UNATTRIBUTED",
+      "channels": {
+        "mmsi": 219170000,
+        "s1": 0.0,
+        "s2": null,
+        "s3": null,
+        "s4": null,
+        "mass": 0.0,
+        "t_star": null,
+        "stretch_factor": null,
+        "unavailable": {
+          "s2": "no vessel overlaps the reconstructed origin",
+          "s3": "no vessel overlaps the reconstructed origin",
+          "s4": "no vessel overlaps the reconstructed origin",
+          "t_star": "no vessel overlaps the reconstructed origin",
+          "stretch_factor": "no vessel overlaps the reconstructed origin"
+        }
+      }
+    },
+    {
+      "mmsi": 219336000,
+      "name": "HELSINGOR",
+      "reason": "insufficient evidence",
+      "verdict": "UNATTRIBUTED",
+      "channels": {
+        "mmsi": 219336000,
+        "s1": 0.0,
+        "s2": null,
+        "s3": null,
+        "s4": null,
+        "mass": 0.0,
+        "t_star": null,
+        "stretch_factor": null,
+        "unavailable": {
+          "s2": "no vessel overlaps the reconstructed origin",
+          "s3": "no vessel overlaps the reconstructed origin",
+          "s4": "no vessel overlaps the reconstructed origin",
+          "t_star": "no vessel overlaps the reconstructed origin",
+          "stretch_factor": "no vessel overlaps the reconstructed origin"
+        }
+      }
+    },
+    {
+      "mmsi": 220389000,
+      "name": "DANA VIKING",
+      "reason": "insufficient evidence",
+      "verdict": "UNATTRIBUTED",
+      "channels": {
+        "mmsi": 220389000,
+        "s1": 0.0,
+        "s2": null,
+        "s3": null,
+        "s4": null,
+        "mass": 0.0,
+        "t_star": null,
+        "stretch_factor": null,
+        "unavailable": {
+          "s2": "no vessel overlaps the reconstructed origin",
+          "s3": "no vessel overlaps the reconstructed origin",
+          "s4": "no vessel overlaps the reconstructed origin",
+          "t_star": "no vessel overlaps the reconstructed origin",
+          "stretch_factor": "no vessel overlaps the reconstructed origin"
+        }
+      }
+    },
+    {
+      "mmsi": 220455000,
+      "name": "JUTLANDIA",
+      "reason": "insufficient evidence",
+      "verdict": "UNATTRIBUTED",
+      "channels": {
+        "mmsi": 220455000,
+        "s1": 0.0,
+        "s2": null,
+        "s3": null,
+        "s4": null,
+        "mass": 0.0,
+        "t_star": null,
+        "stretch_factor": null,
+        "unavailable": {
+          "s2": "no vessel overlaps the reconstructed origin",
+          "s3": "no vessel overlaps the reconstructed origin",
+          "s4": "no vessel overlaps the reconstructed origin",
+          "t_star": "no vessel overlaps the reconstructed origin",
+          "stretch_factor": "no vessel overlaps the reconstructed origin"
+        }
+      }
+    },
+    {
+      "mmsi": 261084300,
+      "name": "SZCZECIN PIONEER",
+      "reason": "insufficient evidence",
+      "verdict": "UNATTRIBUTED",
+      "channels": {
+        "mmsi": 261084300,
+        "s1": 0.0,
+        "s2": null,
+        "s3": null,
+        "s4": null,
+        "mass": 0.0,
+        "t_star": null,
+        "stretch_factor": null,
+        "unavailable": {
+          "s2": "no vessel overlaps the reconstructed origin",
+          "s3": "no vessel overlaps the reconstructed origin",
+          "s4": "no vessel overlaps the reconstructed origin",
+          "t_star": "no vessel overlaps the reconstructed origin",
+          "stretch_factor": "no vessel overlaps the reconstructed origin"
+        }
+      }
+    },
+    {
+      "mmsi": 261230700,
+      "name": "GDYNIA EXPRESS",
+      "reason": "insufficient evidence",
+      "verdict": "UNATTRIBUTED",
+      "channels": {
+        "mmsi": 261230700,
+        "s1": 0.0,
+        "s2": null,
+        "s3": null,
+        "s4": null,
+        "mass": 0.0,
+        "t_star": null,
+        "stretch_factor": null,
+        "unavailable": {
+          "s2": "no vessel overlaps the reconstructed origin",
+          "s3": "no vessel overlaps the reconstructed origin",
+          "s4": "no vessel overlaps the reconstructed origin",
+          "t_star": "no vessel overlaps the reconstructed origin",
+          "stretch_factor": "no vessel overlaps the reconstructed origin"
+        }
+      }
+    },
+    {
+      "mmsi": 261445100,
+      "name": "BALTIC AMBER",
+      "reason": "insufficient evidence",
+      "verdict": "UNATTRIBUTED",
+      "channels": {
+        "mmsi": 261445100,
+        "s1": 0.0,
+        "s2": null,
+        "s3": null,
+        "s4": null,
+        "mass": 0.0,
+        "t_star": null,
+        "stretch_factor": null,
+        "unavailable": {
+          "s2": "no vessel overlaps the reconstructed origin",
+          "s3": "no vessel overlaps the reconstructed origin",
+          "s4": "no vessel overlaps the reconstructed origin",
+          "t_star": "no vessel overlaps the reconstructed origin",
+          "stretch_factor": "no vessel overlaps the reconstructed origin"
+        }
+      }
+    },
+    {
+      "mmsi": 265037000,
+      "name": "GOTLAND SPIRIT",
+      "reason": "insufficient evidence",
+      "verdict": "UNATTRIBUTED",
+      "channels": {
+        "mmsi": 265037000,
+        "s1": 0.0,
+        "s2": null,
+        "s3": null,
+        "s4": null,
+        "mass": 0.0,
+        "t_star": null,
+        "stretch_factor": null,
+        "unavailable": {
+          "s2": "no vessel overlaps the reconstructed origin",
+          "s3": "no vessel overlaps the reconstructed origin",
+          "s4": "no vessel overlaps the reconstructed origin",
+          "t_star": "no vessel overlaps the reconstructed origin",
+          "stretch_factor": "no vessel overlaps the reconstructed origin"
+        }
+      }
+    },
+    {
+      "mmsi": 265744000,
+      "name": "YSTAD TRAWLER",
+      "reason": "insufficient evidence",
+      "verdict": "UNATTRIBUTED",
+      "channels": {
+        "mmsi": 265744000,
+        "s1": 0.0,
+        "s2": null,
+        "s3": null,
+        "s4": null,
+        "mass": 0.0,
+        "t_star": null,
+        "stretch_factor": null,
+        "unavailable": {
+          "s2": "no vessel overlaps the reconstructed origin",
+          "s3": "no vessel overlaps the reconstructed origin",
+          "s4": "no vessel overlaps the reconstructed origin",
+          "t_star": "no vessel overlaps the reconstructed origin",
+          "stretch_factor": "no vessel overlaps the reconstructed origin"
+        }
+      }
+    },
+    {
+      "mmsi": 265892000,
+      "name": "KARLSKRONA NET",
+      "reason": "insufficient evidence",
+      "verdict": "UNATTRIBUTED",
+      "channels": {
+        "mmsi": 265892000,
+        "s1": 0.0,
+        "s2": null,
+        "s3": null,
+        "s4": null,
+        "mass": 0.0,
+        "t_star": null,
+        "stretch_factor": null,
+        "unavailable": {
+          "s2": "no vessel overlaps the reconstructed origin",
+          "s3": "no vessel overlaps the reconstructed origin",
+          "s4": "no vessel overlaps the reconstructed origin",
+          "t_star": "no vessel overlaps the reconstructed origin",
+          "stretch_factor": "no vessel overlaps the reconstructed origin"
+        }
+      }
+    }
+  ]
+}

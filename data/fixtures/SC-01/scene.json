@@ -1,0 +1,52 @@
+{
+  "id": "SC-01",
+  "product_id": "VARUNA_FIXTURE_SC01",
+  "name": "Baltic Night Discharge",
+  "sensor": "Sentinel-1 (footprint authored; no raster in this build)",
+  "acq_time": "2024-03-14T03:40:00+00:00",
+  "footprint": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [
+          15.79521,
+          54.73729
+        ],
+        [
+          15.81376,
+          55.65737
+        ],
+        [
+          14.18624,
+          55.65737
+        ],
+        [
+          14.20479,
+          54.73729
+        ],
+        [
+          15.79521,
+          54.73729
+        ]
+      ]
+    ]
+  },
+  "centre": {
+    "lon": 15.0,
+    "lat": 55.2
+  },
+  "incidence_angle_deg": null,
+  "wind_speed_ms": 6.74,
+  "wind_dir_deg": 159.2,
+  "pixel_spacing_m": null,
+  "source": "authored",
+  "raster_path": null,
+  "badges": [
+    "SIMULATED SLICK — NO SAR IMAGERY IN THIS BUILD"
+  ],
+  "unavailable": {
+    "raster_path": "no SAR scene on disk; Zenodo Part III unavailable at build time",
+    "incidence_angle_deg": "no SAR raster in this build; radiometric and texture features need pixels",
+    "pixel_spacing_m": "no SAR raster in this build; radiometric and texture features need pixels"
+  }
+}

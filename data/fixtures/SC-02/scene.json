@@ -1,0 +1,52 @@
+{
+  "id": "SC-02",
+  "product_id": "VARUNA_FIXTURE_SC02",
+  "name": "The Look-alike Trap",
+  "sensor": "Sentinel-1 (footprint authored; no raster in this build)",
+  "acq_time": "2024-03-14T03:42:00+00:00",
+  "footprint": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [
+          15.42515,
+          55.01976
+        ],
+        [
+          15.43518,
+          55.93987
+        ],
+        [
+          13.79597,
+          55.93476
+        ],
+        [
+          13.8237,
+          55.01482
+        ],
+        [
+          15.42515,
+          55.01976
+        ]
+      ]
+    ]
+  },
+  "centre": {
+    "lon": 14.62,
+    "lat": 55.48
+  },
+  "incidence_angle_deg": null,
+  "wind_speed_ms": 2.1,
+  "wind_dir_deg": 112.0,
+  "pixel_spacing_m": null,
+  "source": "authored",
+  "raster_path": null,
+  "badges": [
+    "SIMULATED SLICK — NO SAR IMAGERY IN THIS BUILD"
+  ],
+  "unavailable": {
+    "raster_path": "no SAR scene on disk; Zenodo Part III unavailable at build time",
+    "incidence_angle_deg": "no SAR raster in this build; radiometric and texture features need pixels",
+    "pixel_spacing_m": "no SAR raster in this build; radiometric and texture features need pixels"
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "id": "SC-03",
+  "product_id": "VARUNA_FIXTURE_SC03",
+  "name": "Clean Sea",
+  "sensor": "Sentinel-1 (footprint authored; no raster in this build)",
+  "acq_time": "2024-03-14T03:44:00+00:00",
+  "footprint": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [
+          16.19565,
+          54.48465
+        ],
+        [
+          16.22328,
+          55.40467
+        ],
+        [
+          14.60609,
+          55.41015
+        ],
+        [
+          14.61498,
+          54.48995
+        ],
+        [
+          16.19565,
+          54.48465
+        ]
+      ]
+    ]
+  },
+  "centre": {
+    "lon": 15.41,
+    "lat": 54.95
+  },
+  "incidence_angle_deg": null,
+  "wind_speed_ms": 7.4,
+  "wind_dir_deg": 248.0,
+  "pixel_spacing_m": null,
+  "source": "authored",
+  "raster_path": null,
+  "badges": [
+    "SIMULATED SLICK — NO SAR IMAGERY IN THIS BUILD"
+  ],
+  "unavailable": {
+    "raster_path": "no SAR scene on disk; Zenodo Part III unavailable at build time",
+    "incidence_angle_deg": "no SAR raster in this build; radiometric and texture features need pixels",
+    "pixel_spacing_m": "no SAR raster in this build; radiometric and texture features need pixels"
+  },
+  "detections": [],
+  "n_detections": 0
+}

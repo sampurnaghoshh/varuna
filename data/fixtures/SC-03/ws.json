@@ -1,0 +1,39 @@
+{
+  "scenario": "SC-03",
+  "timings_ms": {},
+  "timings_note": "No detection, drift or attribution ran; there is nothing to time.",
+  "total_playback_ms": 11000,
+  "events": [
+    {
+      "stage": "SEGMENTING",
+      "progress": 0.3,
+      "message": "Loading scene SC-03 — 2024-03-14 03:44Z, wind 7.4 m/s (inside the 3.0–12.0 m/s gate)",
+      "playback_offset_ms": 0,
+      "payload": {
+        "scene_id": "SC-03",
+        "badges": [
+          "SIMULATED SLICK — NO SAR IMAGERY IN THIS BUILD"
+        ]
+      }
+    },
+    {
+      "stage": "SEGMENTING",
+      "progress": 0.75,
+      "message": "No dark formations above threshold — 0 detections",
+      "playback_offset_ms": 5000,
+      "payload": {
+        "n_detections": 0
+      }
+    },
+    {
+      "stage": "DONE",
+      "progress": 1.0,
+      "message": "Clean sea. Nothing to rewind, nothing to attribute.",
+      "playback_offset_ms": 11000,
+      "payload": {
+        "n_detections": 0,
+        "attribution_issued": false
+      }
+    }
+  ]
+}

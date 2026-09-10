@@ -1,0 +1,80 @@
+{
+  "generator": {
+    "script": "scripts/build_fixtures.py",
+    "version": 1,
+    "generated_at": "2026-09-10T11:49:34.233515+00:00",
+    "git_commit": null
+  },
+  "provisional": true,
+  "frozen": false,
+  "why_provisional": "§15 specifies fixtures from real engine runs on the real Part III scenes. Zenodo Part III was unavailable at build time and data/scenes and data/ais are empty, so the drift physics and the LR fusion are real but the slick geometry and the whole AIS frame are authored. This set is not the §9-frozen one: regenerate and freeze when Tier 1 or Tier 2 data lands.",
+  "data_tier": "none — no SAR raster in this build; §0 Tier 4 was NOT invoked",
+  "badges": [
+    "SIMULATED SLICK — NO SAR IMAGERY IN THIS BUILD",
+    "INJECTED — SIMULATED"
+  ],
+  "pending": [
+    "Real SAR scenes (Zenodo Part III holdout 146–150, or §0 Tier 2 fallback)",
+    "Real Danish AIS background traffic — every track here is injected",
+    "Segmentation: the slick polygons are authored, not detected",
+    "p_oil / class: the LightGBM discriminator is not trained in this build",
+    "SHAP factors: no discriminator, so no attributions to explain",
+    "Radiometric and texture features: no pixels to measure",
+    "distance_to_coast_km: no coastline dataset bundled"
+  ],
+  "engine": {
+    "drift_solver": "real (§5.1) — RK4 Lagrangian, forward and backward",
+    "attribution": "real (§5.3, §5.4) — E1–E4, priors, LR fusion, decision bands",
+    "field_source_chain": "§5.1 tier chain; this build resolved to the synthetic field"
+  },
+  "scenarios": [
+    {
+      "code": "SC-01",
+      "name": "Baltic Night Discharge",
+      "verdict": "MODERATE",
+      "culprit_mmsi": 220517000,
+      "lr": 73.21,
+      "n_vessels_in_frame": 23,
+      "n_ranked": 11,
+      "origin_error_km": 0.17,
+      "t_star_error_min": -30.0,
+      "artefacts": [
+        "ais",
+        "attribution",
+        "attribution.windage-0.020",
+        "attribution.windage-0.040",
+        "detection",
+        "drift",
+        "drift.windage-0.020",
+        "drift.windage-0.040",
+        "scene",
+        "truth",
+        "ws"
+      ]
+    },
+    {
+      "code": "SC-02",
+      "name": "The Look-alike Trap",
+      "verdict": "UNATTRIBUTED",
+      "attribution_issued": false,
+      "wind_gate_violated": true,
+      "n_detections": 1,
+      "n_vessels_in_frame": 12,
+      "artefacts": [
+        "ais",
+        "detection",
+        "scene",
+        "ws"
+      ]
+    },
+    {
+      "code": "SC-03",
+      "name": "Clean Sea",
+      "n_detections": 0,
+      "artefacts": [
+        "scene",
+        "ws"
+      ]
+    }
+  ]
+}

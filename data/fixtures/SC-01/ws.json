@@ -1,0 +1,177 @@
+{
+  "scenario": "SC-01",
+  "timings_ms": {
+    "forward_drift": 777,
+    "backward_drift": 1381,
+    "attribution_all_variants": 15
+  },
+  "timings_note": "Measured engine time on the fixture-build machine. Each event's playback_offset_ms is authored demo pacing (§12) and is not a timing.",
+  "total_playback_ms": 100000,
+  "events": [
+    {
+      "stage": "SEGMENTING",
+      "progress": 0.05,
+      "message": "Loading scene SC-01 — Bornholm Basin, 2024-03-14 03:40Z",
+      "playback_offset_ms": 0,
+      "payload": {
+        "scene_id": "SC-01",
+        "badges": [
+          "SIMULATED SLICK — NO SAR IMAGERY IN THIS BUILD"
+        ]
+      }
+    },
+    {
+      "stage": "SEGMENTING",
+      "progress": 0.18,
+      "message": "1 dark formation delineated — 77.0 km², major axis 22.5 km, bearing 60°",
+      "playback_offset_ms": 6000,
+      "payload": {
+        "detection_id": "SC-01-D1",
+        "provisional": true,
+        "note": "Slick polygon is authored for this build; no segmenter ran (§15)."
+      }
+    },
+    {
+      "stage": "DISCRIMINATING",
+      "progress": 0.28,
+      "message": "Oil / look-alike discriminator is not available in this build — no P(oil) is reported",
+      "playback_offset_ms": 16000,
+      "payload": {
+        "p_oil": null,
+        "unavailable": {
+          "p_oil": "LightGBM oil/look-alike discriminator is not trained in this build"
+        },
+        "wind_gate_violated": false
+      }
+    },
+    {
+      "stage": "REWINDING",
+      "progress": 0.408,
+      "message": "Rewinding ocean state to T−2h 00m",
+      "playback_offset_ms": 24000,
+      "payload": {
+        "t_offset_min": -120,
+        "hull_area_km2": 102.42,
+        "stretch_factor": 1.0,
+        "n_particles": 5000,
+        "field_source": "synthetic"
+      }
+    },
+    {
+      "stage": "REWINDING",
+      "progress": 0.467,
+      "message": "Rewinding ocean state to T−4h 00m",
+      "playback_offset_ms": 31000,
+      "payload": {
+        "t_offset_min": -240,
+        "hull_area_km2": 117.79,
+        "stretch_factor": 1.0,
+        "n_particles": 5000,
+        "field_source": "synthetic"
+      }
+    },
+    {
+      "stage": "REWINDING",
+      "progress": 0.525,
+      "message": "Rewinding ocean state to T−6h 00m",
+      "playback_offset_ms": 38000,
+      "payload": {
+        "t_offset_min": -360,
+        "hull_area_km2": 133.71,
+        "stretch_factor": 1.0,
+        "n_particles": 5000,
+        "field_source": "synthetic"
+      }
+    },
+    {
+      "stage": "REWINDING",
+      "progress": 0.583,
+      "message": "Rewinding ocean state to T−8h 00m",
+      "playback_offset_ms": 45000,
+      "payload": {
+        "t_offset_min": -480,
+        "hull_area_km2": 144.3,
+        "stretch_factor": 1.0,
+        "n_particles": 5000,
+        "field_source": "synthetic"
+      }
+    },
+    {
+      "stage": "REWINDING",
+      "progress": 0.642,
+      "message": "Rewinding ocean state to T−10h 00m",
+      "playback_offset_ms": 52000,
+      "payload": {
+        "t_offset_min": -600,
+        "hull_area_km2": 159.01,
+        "stretch_factor": 1.0,
+        "n_particles": 5000,
+        "field_source": "synthetic"
+      }
+    },
+    {
+      "stage": "REWINDING",
+      "progress": 0.7,
+      "message": "Rewinding ocean state to T−12h 00m",
+      "playback_offset_ms": 59000,
+      "payload": {
+        "t_offset_min": -720,
+        "hull_area_km2": 167.32,
+        "stretch_factor": 1.0,
+        "n_particles": 5000,
+        "field_source": "synthetic"
+      }
+    },
+    {
+      "stage": "REWINDING",
+      "progress": 0.74,
+      "message": "Origin cloud reconstructed over 12 h — windage α=0.033, K_h=10.0 m²/s, field: synthetic",
+      "playback_offset_ms": 68000,
+      "payload": {
+        "n_frames": 25,
+        "horizon_h": 12
+      }
+    },
+    {
+      "stage": "FUSING",
+      "progress": 0.84,
+      "message": "Scoring 23 AIS-visible vessels against the reconstructed origin",
+      "playback_offset_ms": 76000,
+      "payload": {
+        "n_vessels": 23,
+        "n_ranked": 11,
+        "n_unrankable": 12
+      }
+    },
+    {
+      "stage": "FUSING",
+      "progress": 0.94,
+      "message": "Top candidate MMSI 220517000 (NORD ASTRAEA) — LR 73.2, log LR 4.29 nats",
+      "playback_offset_ms": 88000,
+      "payload": {
+        "mmsi": 220517000,
+        "lr": 73.215,
+        "log_lr": 4.2934,
+        "terms_nats": {
+          "s1": 1.344,
+          "s2": 0.989,
+          "s3": 0.1019,
+          "s4": 0.7885,
+          "prior": 1.07
+        }
+      }
+    },
+    {
+      "stage": "DONE",
+      "progress": 1.0,
+      "message": "MODERATE — MMSI 220517000 (NORD ASTRAEA), LR 73.2, posterior 0.82",
+      "playback_offset_ms": 100000,
+      "payload": {
+        "verdict": "MODERATE",
+        "none_of_the_above_posterior": 0.1115,
+        "n_vessels_in_frame": 23,
+        "culprit_mmsi": 220517000
+      }
+    }
+  ]
+}

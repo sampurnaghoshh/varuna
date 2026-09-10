@@ -1,0 +1,238 @@
+{
+  "id": "SC-02-D1",
+  "scene_id": "SC-02",
+  "geom": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [
+          14.67092,
+          55.48015
+        ],
+        [
+          14.66442,
+          55.47614
+        ],
+        [
+          14.65693,
+          55.47331
+        ],
+        [
+          14.64952,
+          55.47157
+        ],
+        [
+          14.65247,
+          55.46675
+        ],
+        [
+          14.65225,
+          55.46187
+        ],
+        [
+          14.6451,
+          55.4606
+        ],
+        [
+          14.64121,
+          55.45666
+        ],
+        [
+          14.63807,
+          55.44896
+        ],
+        [
+          14.6308,
+          55.44257
+        ],
+        [
+          14.62033,
+          55.44603
+        ],
+        [
+          14.61124,
+          55.44743
+        ],
+        [
+          14.6042,
+          55.45184
+        ],
+        [
+          14.59603,
+          55.4529
+        ],
+        [
+          14.59262,
+          55.45833
+        ],
+        [
+          14.5965,
+          55.4665
+        ],
+        [
+          14.59064,
+          55.46774
+        ],
+        [
+          14.58957,
+          55.47107
+        ],
+        [
+          14.57912,
+          55.47231
+        ],
+        [
+          14.57787,
+          55.47607
+        ],
+        [
+          14.57101,
+          55.47984
+        ],
+        [
+          14.56786,
+          55.48451
+        ],
+        [
+          14.56441,
+          55.49005
+        ],
+        [
+          14.57269,
+          55.49349
+        ],
+        [
+          14.57284,
+          55.49922
+        ],
+        [
+          14.57728,
+          55.50397
+        ],
+        [
+          14.59285,
+          55.50096
+        ],
+        [
+          14.60134,
+          55.50051
+        ],
+        [
+          14.60648,
+          55.50319
+        ],
+        [
+          14.61398,
+          55.50085
+        ],
+        [
+          14.61975,
+          55.50619
+        ],
+        [
+          14.62551,
+          55.50047
+        ],
+        [
+          14.63544,
+          55.50749
+        ],
+        [
+          14.63748,
+          55.49973
+        ],
+        [
+          14.64959,
+          55.50338
+        ],
+        [
+          14.65984,
+          55.50285
+        ],
+        [
+          14.66678,
+          55.49951
+        ],
+        [
+          14.6714,
+          55.49506
+        ],
+        [
+          14.67813,
+          55.49091
+        ],
+        [
+          14.67644,
+          55.48524
+        ],
+        [
+          14.67092,
+          55.48015
+        ]
+      ]
+    ]
+  },
+  "features": {
+    "area_km2": 29.9892,
+    "perimeter_km": 25.6669,
+    "shape_complexity": 1.7481,
+    "major_axis_km": 6.8742,
+    "minor_axis_km": 6.4575,
+    "eccentricity": 0.3428,
+    "orientation_deg": 30.73,
+    "mean_sigma0_db": null,
+    "std_sigma0_db": null,
+    "contrast_db": null,
+    "edge_gradient_mean": null,
+    "edge_gradient_std": null,
+    "glcm_homogeneity": null,
+    "glcm_contrast": null,
+    "glcm_entropy": null,
+    "wind_speed_ms": 2.1,
+    "distance_to_coast_km": null,
+    "n_ships_within_20km": 11
+  },
+  "feature_provenance": {
+    "area_km2": "derived by fixture generator from the slick hull — pending detection/features.extract",
+    "perimeter_km": "derived by fixture generator from the slick hull — pending detection/features.extract",
+    "shape_complexity": "derived by fixture generator from the slick hull — pending detection/features.extract",
+    "major_axis_km": "derived by fixture generator from the slick hull — pending detection/features.extract",
+    "minor_axis_km": "derived by fixture generator from the slick hull — pending detection/features.extract",
+    "eccentricity": "derived by fixture generator from the slick hull — pending detection/features.extract",
+    "orientation_deg": "derived by fixture generator from the slick hull — pending detection/features.extract"
+  },
+  "p_oil": null,
+  "class": null,
+  "shap_factors": [],
+  "wind_gate_violated": true,
+  "wind_gate_range_ms": [
+    3.0,
+    12.0
+  ],
+  "model_version": null,
+  "detector": "authored",
+  "unavailable": {
+    "mean_sigma0_db": "no SAR raster in this build; radiometric and texture features need pixels",
+    "std_sigma0_db": "no SAR raster in this build; radiometric and texture features need pixels",
+    "contrast_db": "no SAR raster in this build; radiometric and texture features need pixels",
+    "edge_gradient_mean": "no SAR raster in this build; radiometric and texture features need pixels",
+    "edge_gradient_std": "no SAR raster in this build; radiometric and texture features need pixels",
+    "glcm_homogeneity": "no SAR raster in this build; radiometric and texture features need pixels",
+    "glcm_contrast": "no SAR raster in this build; radiometric and texture features need pixels",
+    "glcm_entropy": "no SAR raster in this build; radiometric and texture features need pixels",
+    "distance_to_coast_km": "no coastline dataset bundled in this build",
+    "p_oil": "LightGBM oil/look-alike discriminator is not trained in this build",
+    "class": "LightGBM oil/look-alike discriminator is not trained in this build",
+    "shap_factors": "LightGBM oil/look-alike discriminator is not trained in this build",
+    "model_version": "no model ran; the slick polygon is authored, not detected"
+  },
+  "provenance": "Authored low-wind dark formation; no segmenter ran (§15).",
+  "attribution": {
+    "issued": false,
+    "verdict": "UNATTRIBUTED",
+    "reason": "wind gate violated (2.1 m/s < 3.0 m/s): below 3.0 m/s the sea surface itself mimics oil, so the dark formation is not trustworthy evidence of a slick (§5.2). No P(oil) is reported either — the discriminator is not available in this build, and a number invented for it would be exactly what §2.2 forbids.",
+    "recommendation": "Queue for cross-check against a second pass in a wind window of 3.0–12.0 m/s.",
+    "candidates": [],
+    "n_vessels_in_frame": 12
+  }
+}
