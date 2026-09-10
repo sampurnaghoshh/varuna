@@ -134,8 +134,18 @@ export function Scrubber({ console: state }: { console: Console }) {
         <span>
           Particles <span className="tnum text-ink">{frame.n_particles}</span>
         </span>
-        <span title="§5.3 — observed major axis divided by the released patch length.">
+        {/* The floor is a stated physical bound, not a silent correction (§5.3,
+            §2.2): when it engages the raw ratio is shown next to it, so a
+            floored value is never mistaken for a measured one. */}
+        <span title="§5.3 — observed major axis divided by the released patch length. Floored at 1.0 because oil spreads and does not contract; below the floor the raw ratio carries no stretch information.">
           Stretch <span className="tnum text-ink">{num(frame.stretch_factor, 3)}</span>
+          {frame.stretch_factor_raw < frame.stretch_factor ? (
+            <span className="text-ink-faint">
+              {" "}
+              (floored; raw{" "}
+              <span className="tnum">{num(frame.stretch_factor_raw, 2)}</span>)
+            </span>
+          ) : null}
         </span>
         {culprit && culpritIgnited ? (
           <span className="ml-auto text-hazard">

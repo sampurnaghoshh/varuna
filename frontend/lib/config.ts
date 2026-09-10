@@ -29,3 +29,23 @@ export const MAP_INITIAL = {
   pitch: 0,
   bearing: 0,
 } as const;
+
+/**
+ * The map canvas is the full window, but the panels float on top of it, so the
+ * only part a judge can actually see is the gap between the rails. Fitting a
+ * scene to the canvas centres it under the right-hand rail; these paddings
+ * push the fit into the visible gap instead.
+ *
+ * They mirror app/page.tsx: left rail left-3 + w-[21rem], right rail right-3 +
+ * w-[22rem], header top-[4.5rem], scrubber bottom-24. Keep them in step with
+ * that layout — if a rail is resized, this is the other half of the change.
+ */
+export const MAP_FIT_PADDING_PX = {
+  left: 12 + 21 * 16 + 16,
+  right: 12 + 22 * 16 + 16,
+  top: 4.5 * 16 + 16,
+  bottom: 96 + 16,
+} as const;
+
+/** Never zoom past this when a scene's geometry is small. */
+export const MAP_FIT_MAX_ZOOM = 11;
