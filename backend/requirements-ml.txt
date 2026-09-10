@@ -1,0 +1,17 @@
+# Training-only dependencies. Not installed in the backend image.
+#
+# Per §0 training runs on Colab / Kaggle T4; the backend image carries inference
+# packages only. Install with:  pip install -r requirements-ml.txt
+#
+# Exact pins only (§9).
+
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+-r requirements.txt
+
+segmentation-models-pytorch==0.3.4
+torchvision==0.20.1+cpu
+albumentations==1.4.24
+timm==0.9.7
+tqdm==4.67.1
+matplotlib==3.10.0

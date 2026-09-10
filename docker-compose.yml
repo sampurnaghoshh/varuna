@@ -1,0 +1,78 @@
+# VARUNA local stack. Postgres + PostGIS, Redis, backend.
+#
+# The frontend is NOT containerised on purpose: Next dev-server hot reload over
+# Windows bind mounts is slow and unreliable, and the frontend is worked on for
+# four continuous hours. Run it natively:  cd frontend && npm run dev
+# It talks to http://localhost:8000.
+
+name: varuna
+
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-varuna}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-varuna}
+      POSTGRES_DB: ${POSTGRES_DB:-varuna}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Runs ONLY on an empty volume. Schema edits need `make reset-db`.
+      - ./backend/app/db/schema.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-varuna} -d ${POSTGRES_DB:-varuna}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 5s
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      VARUNA_DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-varuna}:${POSTGRES_PASSWORD:-varuna}@db:5432/${POSTGRES_DB:-varuna}
+      VARUNA_REDIS_URL: redis://redis:6379/0
+      VARUNA_ENV: ${VARUNA_ENV:-dev}
+      VARUNA_LOG_LEVEL: ${VARUNA_LOG_LEVEL:-INFO}
+      VARUNA_DATA_DIR: /data
+      VARUNA_SCENES_DIR: /data/scenes
+      VARUNA_AIS_DIR: /data/ais
+      VARUNA_MODELS_DIR: /data/models
+      VARUNA_FIXTURES_DIR: /data/fixtures
+      PYTHONPATH: /app
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    volumes:
+      - ./backend:/app
+      # scripts lands inside /app so `from scripts.data_split import ...`
+      # resolves the same way in the container and on the host.
+      - ./scripts:/app/scripts:ro
+      # §9 read-only inputs, enforced by the mount rather than by convention.
+      - ./data/scenes:/data/scenes:ro
+      - ./data/ais:/data/ais:ro
+      # Written during the build: fixtures at hour 5 (§15), weights on arrival.
+      # §9 freezes fixtures once green, not from T+0.
+      - ./data/fixtures:/data/fixtures
+      - ./data/models:/data/models
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  pgdata:

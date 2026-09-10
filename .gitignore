@@ -1,0 +1,30 @@
+.env
+*.pyc
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.venv/
+venv/
+
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+
+# Datasets and weights are fetched, not committed.
+data/raw/
+data/scenes/*
+data/ais/*
+data/models/*
+!data/**/.gitkeep
+!data/**/README.md
+
+# data/fixtures IS committed: it is the offline demo fallback (§2.1, §9).
+
+*.7z
+*.tif
+*.tiff
+*.nc
+*.pt
+*.pth
+*.txt.gz

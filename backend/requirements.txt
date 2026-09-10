@@ -1,0 +1,50 @@
+# VARUNA backend runtime. Exact pins only, no ranges (§9: an unpinned rebuild
+# that resolves differently is a new dependency wearing a disguise).
+#
+# Everything the P0 path will need is declared now, at T+0, because §9 bans new
+# dependencies after T+14h. Training-only packages live in requirements-ml.txt.
+
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+# --- web ---------------------------------------------------------------------
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+pydantic==2.10.4
+pydantic-settings==2.7.0
+python-multipart==0.0.20
+httpx==0.28.1
+jinja2==3.1.5
+websockets==14.1
+
+# --- data layer --------------------------------------------------------------
+sqlalchemy==2.0.36
+asyncpg==0.30.0
+geoalchemy2==0.16.0
+redis==5.2.1
+
+# --- numerics / geo / physics ------------------------------------------------
+numpy==1.26.4
+scipy==1.14.1
+pandas==2.2.3
+shapely==2.0.6
+pyproj==3.7.0
+rasterio==1.4.3
+geopandas==1.0.1
+scikit-image==0.25.0
+
+# --- ml inference ------------------------------------------------------------
+scikit-learn==1.6.0
+lightgbm==4.5.0
+shap==0.46.0
+torch==2.5.1+cpu
+
+# --- data acquisition --------------------------------------------------------
+# 7z is absent on the dev machine; scripts/download_data.sh falls back to this.
+py7zr==0.22.0
+
+# --- dev tooling -------------------------------------------------------------
+# Shipped in the image on purpose: there is no deployment (§0, §10 P2-20), so
+# this image is the development environment and `make test` runs inside it.
+pytest==8.3.4
+pytest-asyncio==0.25.0
+ruff==0.8.6
