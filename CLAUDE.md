@@ -240,6 +240,16 @@ L_released = major_axis_km / stretch_factor      # stretch_factor from the drift
 s3_j       = lognormal_pdf(τ_j; median = 90 min, σ = 0.9) normalised to peak 1.0
 ```
 
+**`stretch_factor` is defined later-in-physical-time ÷ earlier-in-physical-time.** Per drift
+snapshot, it is the ratio of the particle cloud's PCA major axis at the *later* physical time to
+its major axis at the *earlier* physical time — so for a **backward** run it is
+`major_axis(seed) / major_axis(t)` (observed ÷ released, the seed being the observed slick), and
+for a **forward** run `major_axis(t) / major_axis(seed)`. It is therefore **≥ 1 for a spreading
+cloud**, which is what makes `L_released = major_axis_km / stretch_factor` shorten the observed
+slick back to the released patch. Defining it as "now ÷ seed" in both modes inverts the backward
+case and makes the released patch *longer* than the observation — E3 then divides the wrong way.
+Clamp to 1.0 when the seed cloud is degenerate.
+
 **E4 — dark-gap coincidence**
 ```
 g_j  = longest AIS gap (minutes) overlapping [t*_j − 1h, t*_j + 1h]

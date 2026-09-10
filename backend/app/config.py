@@ -51,6 +51,33 @@ class Settings(BaseSettings):
     drift_snapshot_interval_min: int = Field(default=30, gt=0)
     drift_seed: int = 42
 
+    # Stokes drift is not shipped by every field source. Where it is absent it is
+    # approximated as a fixed fraction of U10 aligned with the wind - the standard
+    # first-order surface-Stokes relation.
+    stokes_wind_fraction: float = Field(default=0.015, ge=0.0, le=0.05)
+
+    # Synthetic field (tier 3): 2-3 mesoscale eddies, per §5.1.
+    synthetic_n_eddies: int = Field(default=3, ge=2, le=3)
+    synthetic_eddy_speed_ms: float = Field(default=0.35, gt=0.0)
+    synthetic_wind_speed_ms: float = Field(default=7.0, gt=0.0)
+
+    # --------------------------------------- §5.1 density / hull ----
+
+    drift_cell_size_m: float = Field(default=200.0, gt=0.0)
+    drift_kde_bandwidth_m: float = Field(default=500.0, gt=0.0)
+    drift_grid_pad_m: float = Field(default=2000.0, ge=0.0)
+
+    # Alpha-shape circumradius cutoff, in multiples of mean inter-particle
+    # spacing. Measured on a 12 h backward cloud: 6 leaves ~11% of particles
+    # outside the uncertainty hull, 9 keeps ~96% inside while still cutting ~20%
+    # off the convex hull, so the concavities the hull exists to show survive.
+    drift_hull_spacing_multiple: float = Field(default=9.0, gt=0.0)
+
+    # The full 5000-particle 12 h run plus density must stay inside this budget:
+    # §7 streams stage events live, and a run slower than the stage sequence makes
+    # the demo unwatchable.
+    drift_budget_s: float = Field(default=10.0, gt=0.0)
+
     # ------------------------------------------- §5.2 detection wind gate ----
     # Below 3 m/s the sea surface itself mimics oil; above 12 m/s slicks
     # disperse below detectability.
