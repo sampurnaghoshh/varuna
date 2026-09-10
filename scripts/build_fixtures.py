@@ -22,9 +22,27 @@ AIS frame. It unblocks §15's purpose - the frontend contract - but it is not th
 §9-frozen set and says so in its own manifest. Regenerate and freeze once Tier 1
 or Tier 2 data lands.
 
-This is not §0 Tier 4. No synthetic SAR pixels are produced anywhere; there is no
-raster at all. The slick is a polygon authored in metric space, and the Tier 4
-decision gate is untouched.
+§0 TIER 4 IS ELECTED, FOR SC-01'S RASTER ONLY
+---------------------------------------------
+SC-01 renders a synthetic Sigma0 raster (scripts/synth_sar.py) so that the two
+§5.2 pixel-derived rule terms - contrast_db and edge_gradient_mean - have
+something real to measure. That is synthetic SAR, which §0 calls Tier 4 and
+requires be reached by an explicit human decision rather than by a code path
+degrading into it. It was decided explicitly; nothing here falls back into it,
+and SC-02 and SC-03 have no raster at all.
+
+The raster is scenario imagery for the demo. It is NOT evidence that detection
+works on real SAR, and no detection metric may be quoted from it (§16). It
+carries `SYNTHETIC - NOT SAR IMAGERY` on the scene, on every feature derived from
+it, in the WS stage events and in the manifest.
+
+PLACEMENT IS GUARDED
+--------------------
+An earlier run of this script put SC-01 on Bornholm: 80 of 116 slick vertices,
+the release point and ~90% of the particles at the worst snapshot were on the
+island, and every number downstream was arithmetically correct and physically
+meaningless. scripts/land_guard.py now refuses to let that be written - it
+raises, the build stops, and nothing is emitted.
 
 How SC-01 is built - a closed loop, not a plant
 -----------------------------------------------
@@ -56,6 +74,7 @@ import logging
 import math
 import subprocess
 import sys
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -68,6 +87,7 @@ from shapely.ops import transform as shapely_transform
 
 from app.attribution import channels as channels_mod
 from app.attribution import fusion as fusion_mod
+from app.attribution import gate as gate_mod
 from app.attribution import priors as priors_mod
 from app.config import settings
 from app.detection import discriminator as discriminator_mod
@@ -76,6 +96,7 @@ from app.detection import features as features_mod
 from app.drift import density as density_mod
 from app.drift import fields as fields_mod
 from app.drift import solver as solver_mod
+from scripts import land_guard, synth_sar
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 logger = logging.getLogger("build_fixtures")
@@ -87,9 +108,15 @@ GENERATOR_VERSION = 1
 # measurement. It is listed here, in one place, so that a reader can see exactly
 # what was assumed and what was computed from it.
 
-# Bornholm Basin, open water, inside Danish AIS coverage.
-AOI_LON = 15.00
-AOI_LAT = 55.20
+# Eastern Bornholm Basin, open water, inside Danish AIS coverage.
+#
+# This was 15.00 / 55.20 and that was wrong: it sits 0.8 km off Bornholm, and the
+# drift carried the slick straight onto the island - 80 of 116 vertices and ~90%
+# of the particles ashore. Measured here with the real solver: release over
+# water, 0 of 111 slick vertices on land, no particles on land at any snapshot,
+# 53 km of clearance. land_guard enforces it rather than trusting this comment.
+AOI_LON = 16.30
+AOI_LAT = 55.55
 
 # Scene acquisition. Sentinel-1 descending passes over the Baltic fall near
 # 04:00 UTC, which is also what makes SC-01 a night discharge.
@@ -137,6 +164,14 @@ SEED_SC01 = 20260314
 
 SIMULATED_AIS_BADGE = "INJECTED — SIMULATED"
 AUTHORED_SCENE_BADGE = "SIMULATED SLICK — NO SAR IMAGERY IN THIS BUILD"
+# SC-01 alone renders pixels (§0 Tier 4, elected). The badge is owned by the
+# module that makes them, so the label cannot drift from the thing it labels.
+SYNTHETIC_RASTER_BADGE = synth_sar.BADGE
+GATE_PASSED = "the gate passed; there is nothing withheld and no refusal to state"
+SYNTHETIC_PIXELS = (
+    "measured from the SC-01 synthetic Sigma0 raster — §0 Tier 4 scenario "
+    "imagery, not real SAR; no detection metric may be quoted from it (§16)"
+)
 
 # Owned by the modules that produce them, so a reason cannot drift between what
 # the engine says and what the fixture records.
@@ -763,7 +798,17 @@ def _scene(
     wind_speed_ms: float,
     wind_dir_deg: float,
     frame: solver_mod.Frame,
+    raster: synth_sar.SyntheticScene | None = None,
+    raster_name: str | None = None,
 ) -> dict[str, Any]:
+    """One scene block.
+
+    With `raster` given the scene carries synthetic pixels (§0 Tier 4, elected
+    for SC-01 only) and the badge that says so. Spacing and incidence then have
+    values - but they are properties of an authored product, not measurements of
+    a real one, so they are labelled `authored` rather than quietly promoted to
+    looking surveyed.
+    """
     centre_m = frame.forward(np.array([centre_lon]), np.array([centre_lat]))[0]
     box = shapely.box(
         centre_m[0] - SCENE_HALF_SPAN_M,
@@ -771,7 +816,7 @@ def _scene(
         centre_m[0] + SCENE_HALF_SPAN_M,
         centre_m[1] + SCENE_HALF_SPAN_M,
     )
-    return {
+    scene: dict[str, Any] = {
         "id": code,
         "product_id": f"VARUNA_FIXTURE_{code.replace('-', '')}",
         "name": name,
@@ -793,6 +838,26 @@ def _scene(
         },
     }
 
+    if raster is None:
+        return scene
+
+    scene["sensor"] = "Sentinel-1 geometry, synthetic pixels (§0 Tier 4, elected)"
+    scene["incidence_angle_deg"] = raster.incidence_angle_deg
+    scene["pixel_spacing_m"] = raster.pixel_spacing_m
+    scene["raster_path"] = raster_name
+    scene["raster_shape_px"] = list(raster.shape)
+    scene["raster_crs"] = f"EPSG:{raster.crs_epsg}"
+    scene["raster_units"] = "dB (Sigma0 VV), stored as int16 hundredths"
+    scene["raster_method"] = raster.method
+    scene["badges"] = [SYNTHETIC_RASTER_BADGE]
+    scene["unavailable"] = {}
+    scene["provenance"] = {
+        "incidence_angle_deg": "authored product geometry, not a measured one",
+        "pixel_spacing_m": "authored product geometry, not a measured one",
+        "raster_path": SYNTHETIC_PIXELS,
+    }
+    return scene
+
 
 def _detection(
     detection_id: str,
@@ -801,7 +866,8 @@ def _detection(
     frame: solver_mod.Frame,
     wind_speed_ms: float,
     n_ships_within_20km: int | None,
-) -> dict[str, Any]:
+    raster: synth_sar.SyntheticScene | None = None,
+) -> tuple[dict[str, Any], discriminator_mod.DiscriminatorResult]:
     """One detection block: real features, a real classification, honest gaps.
 
     The polygon is authored — no segmenter ran (§15) — but everything computed
@@ -810,11 +876,22 @@ def _detection(
     With no trained model on disk that classification comes from the rule-based
     §5.2 physics scorer, and the block says so in `method` and `note` rather
     than letting a reader assume a model ran.
+
+    Given a `raster` the eight image-derived features resolve instead of coming
+    back None — SC-01 only, §0 Tier 4. They are measured for real, by the same
+    `features.extract` a live scene would use, from pixels that are synthetic.
+    Both halves of that sentence travel with them in `feature_provenance`.
+
+    Returns the payload and the `DiscriminatorResult` behind it. The result is
+    what `attribution.gate` reads: the caller must not re-derive a class from the
+    payload's rounded `p_oil`, because a detection sitting on the threshold would
+    then be classified twice, by two different numbers.
     """
     geometry = _hull_geometry(polygon_utm)
     extracted = features_mod.extract(
         polygon_utm,
-        sigma0_db=None,
+        sigma0_db=None if raster is None else raster.sigma0_db,
+        transform=None if raster is None else raster.transform,
         wind_speed_ms=wind_speed_ms,
         vessel_positions_m=None,
     )
@@ -831,7 +908,17 @@ def _detection(
     gate_violated, gate_reason = discriminator_mod.wind_gate(extracted)
     payload = explain_mod.to_ui_payload(extracted, result)
 
-    return {
+    provenance = {name: AUTHORED_POLYGON for name in geometry}
+    if raster is not None:
+        provenance.update(
+            {
+                name: SYNTHETIC_PIXELS
+                for name in features_mod.RADIOMETRIC_FEATURES + features_mod.TEXTURE_FEATURES
+                if values.get(name) is not None
+            }
+        )
+
+    payload = {
         "id": detection_id,
         "scene_id": scene_id,
         "geom": _geojson(polygon_utm, frame),
@@ -839,7 +926,7 @@ def _detection(
             name: (round(value, 4) if isinstance(value, float) else value)
             for name, value in values.items()
         },
-        "feature_provenance": {name: AUTHORED_POLYGON for name in geometry},
+        "feature_provenance": provenance,
         "p_oil": round(result.p_oil, 4) if result.p_oil is not None else None,
         "class": result.p_class,
         "method": result.method,
@@ -855,6 +942,47 @@ def _detection(
         "detector": result.method,
         "unavailable": dict(result.unavailable),
         "provenance": AUTHORED_POLYGON,
+    }
+    return payload, result
+
+
+def _guard_particles(
+    mask: land_guard.LandMask,
+    runs: Sequence[tuple[str, solver_mod.DriftRun]],
+) -> dict[str, Any]:
+    """Every particle of every snapshot of every run, against the land mask.
+
+    Runs arrive already labelled rather than keyed by a parameter, so the forward
+    leg - which has no windage variant - cannot end up described by whatever
+    number happened to key it.
+
+    Returns a summary rather than one report per snapshot: there are ~75 across
+    the three windage variants and the interesting one is the worst. The guard has
+    already raised by the time this returns, so what is recorded here is the
+    margin, not the verdict.
+    """
+    worst: land_guard.PlacementReport | None = None
+    n_checked = 0
+    for label, run in runs:
+        for state in run.states:
+            lon, lat = run.frame.inverse(state.positions)
+            report = land_guard.check_points(
+                mask,
+                f"{label} t{state.t_offset_min:+d} min particles",
+                lon,
+                lat,
+                max_fraction_on_land=land_guard.MAX_PARTICLE_LAND_FRACTION,
+            )
+            n_checked += 1
+            if worst is None or report.fraction_on_land > worst.fraction_on_land:
+                worst = report
+    if worst is None:
+        raise land_guard.LandPlacementError("no drift snapshots to check.")
+    return {
+        "snapshots_checked": n_checked,
+        "max_fraction_on_land": round(worst.fraction_on_land, 6),
+        "max_fraction_at": worst.label,
+        "tolerance": land_guard.MAX_PARTICLE_LAND_FRACTION,
     }
 
 
@@ -941,6 +1069,33 @@ def build_sc01(root: Path) -> dict[str, Any]:
     )
     corridor_wgs84 = _to_wgs84(corridor_utm, authoring)
 
+    # --- placement guard, before a single particle is integrated ---------------
+    # This scenario was previously authored 0.8 km off Bornholm and drifted onto
+    # it. Nothing downstream noticed, because nothing downstream has an opinion
+    # about land. Checked here first so a misplaced release fails in a second
+    # rather than after two drift legs.
+    mask = land_guard.load_mask()
+    release_lonlat = authoring.to_wgs84.transform(
+        float(release_end_m[0]), float(release_end_m[1])
+    )
+    placement: dict[str, Any] = {
+        "mask_source": mask.source,
+        "mask_aoi": {
+            "lon": [mask.lon_min, mask.lon_max],
+            "lat": [mask.lat_min, mask.lat_max],
+        },
+        "release_point": land_guard.check_points(
+            mask,
+            f"{code} release point",
+            np.array([release_lonlat[0]]),
+            np.array([release_lonlat[1]]),
+            clearance_of=Point(release_lonlat),
+        ).as_dict(),
+        "release_corridor": land_guard.check_polygon(
+            mask, f"{code} release corridor", corridor_wgs84
+        ).as_dict(),
+    }
+
     field = fields_mod.resolve(
         corridor_wgs84.buffer(FIELD_BBOX_PAD_DEG).bounds,
         release_end_time,
@@ -959,6 +1114,9 @@ def build_sc01(root: Path) -> dict[str, Any]:
     )
     observed_utm = density_mod.alpha_hull(forward_run.states[-1].positions)
     observed_wgs84 = _to_wgs84(observed_utm, forward_run.frame)
+    placement["observed_slick"] = land_guard.check_polygon(
+        mask, f"{code} observed slick", observed_wgs84
+    ).as_dict()
 
     # --- backward leg: what the pipeline actually sees --------------------------
     runs: dict[float, solver_mod.DriftRun] = {}
@@ -969,6 +1127,14 @@ def build_sc01(root: Path) -> dict[str, Any]:
         )
         runs[windage] = run
         densities[windage] = density_mod.compute_run_density(run.states)
+
+    placement["forward_particles"] = _guard_particles(
+        mask, [(f"{code} forward leg", forward_run)]
+    )
+    placement["backward_particles"] = _guard_particles(
+        mask,
+        [(f"{code} backward α={windage:.3f}", run) for windage, run in sorted(runs.items())],
+    )
 
     default_run = runs[DEFAULT_WINDAGE]
     default_density = densities[DEFAULT_WINDAGE]
@@ -995,31 +1161,32 @@ def build_sc01(root: Path) -> dict[str, Any]:
     names = {spec.mmsi: spec.name for spec in specs}
     frame_priors = priors_mod.frame_priors(vessel_meta)
 
-    # --- score and fuse, once per windage variant --------------------------------
-    fuse_started = datetime.now(tz=UTC)
-    results: dict[float, fusion_mod.FrameResult] = {}
-    for windage in WINDAGE_VARIANTS:
-        scores = channels_mod.score_vessels(
-            tracks,
-            densities[windage],
-            T0,
-            slick_orientation_deg=geometry["orientation_deg"],
-            major_axis_km=geometry["major_axis_km"],
-        )
-        results[windage] = fusion_mod.fuse(scores, frame_priors)
-    fuse_ms = int((datetime.now(tz=UTC) - fuse_started).total_seconds() * 1000)
-
-    default_result = results[DEFAULT_WINDAGE]
-
     slick_centroid_m = np.array(
         _to_utm(observed_wgs84, default_run.frame).centroid.coords[0]
     )
     release_centroid_run_m = np.array(
         _to_utm(corridor_wgs84, default_run.frame).centroid.coords[0]
     )
+    observed_run_utm = _to_utm(observed_wgs84, default_run.frame)
 
-    # --- write ------------------------------------------------------------------
+    # --- the scene, with synthetic pixels (§0 Tier 4, elected for SC-01) --------
+    # Rendered from the slick polygon and the run's own wind field, so the two
+    # §5.2 pixel terms have something real to measure. Scenario imagery, badged
+    # as such everywhere it surfaces; not evidence about real SAR (§16).
     wind_speed_ms, wind_dir_deg = _wind_from_field(field, AOI_LON, AOI_LAT, T0)
+    scene_centre_m = default_run.frame.forward(np.array([AOI_LON]), np.array([AOI_LAT]))[0]
+    raster = synth_sar.render(
+        observed_run_utm,
+        scene_centre_m,
+        int(default_run.frame.crs.to_epsg()),
+        field,
+        default_run.frame.to_wgs84,
+        T0,
+        seed=SEED_SC01,
+    )
+    raster_name = "sigma0_vv_db.tif"
+    raster_bytes = synth_sar.write_geotiff(raster, directory / raster_name)
+
     scene = _scene(
         code,
         "Baltic Night Discharge",
@@ -1029,20 +1196,59 @@ def build_sc01(root: Path) -> dict[str, Any]:
         wind_speed_ms,
         wind_dir_deg=wind_dir_deg,
         frame=default_run.frame,
+        raster=raster,
+        raster_name=raster_name,
     )
-    detection = _detection(
+    detection, discriminator_result = _detection(
         f"{code}-D1",
         code,
-        _to_utm(observed_wgs84, default_run.frame),
+        observed_run_utm,
         default_run.frame,
         wind_speed_ms,
         _count_ships_within(tracks, slick_centroid_m, 20_000.0),
+        raster=raster,
     )
     detection["provenance"] = (
         "Alpha hull of a real 6 h forward drift run seeded on the authored release "
         "corridor. The attribution engine sees only this polygon. Features and "
         "classification are engine output; the polygon is not."
     )
+
+    # --- the gate: may this detection name a vessel at all? ---------------------
+    # SC-01 previously classified look-alike and attributed a culprit anyway.
+    # Attribution does not run unless the detection reads as oil (§5.2 wind gate,
+    # same principle). A blocked frame writes the refusal and stops.
+    gate_decision = gate_mod.evaluate(
+        discriminator_result,
+        detection["wind_gate_violated"],
+        detection["wind_gate_reason"],
+    )
+
+    # --- score and fuse, once per windage variant --------------------------------
+    results: dict[float, fusion_mod.FrameResult] = {}
+    fuse_ms = 0
+    if gate_decision.passed:
+        fuse_started = datetime.now(tz=UTC)
+        for windage in WINDAGE_VARIANTS:
+            scores = channels_mod.score_vessels(
+                tracks,
+                densities[windage],
+                T0,
+                slick_orientation_deg=geometry["orientation_deg"],
+                major_axis_km=geometry["major_axis_km"],
+            )
+            results[windage] = fusion_mod.fuse(scores, frame_priors)
+        fuse_ms = int((datetime.now(tz=UTC) - fuse_started).total_seconds() * 1000)
+    else:
+        logger.warning(
+            "%s: attribution withheld by the gate (%s) — %s",
+            code,
+            gate_decision.code,
+            gate_decision.reason,
+        )
+        detection["attribution"] = gate_decision.as_refusal(len(specs))
+
+    default_result = results.get(DEFAULT_WINDAGE)
 
     _write_json(directory / "scene.json", scene)
     _write_json(directory / "detection.json", detection)
@@ -1060,18 +1266,23 @@ def build_sc01(root: Path) -> dict[str, Any]:
             ),
             compact=True,
         )
-        _write_json(
-            directory / f"attribution{suffix}.json",
-            _serialise_attribution(results[windage], names, len(specs), windage),
-        )
+        if windage in results:
+            _write_json(
+                directory / f"attribution{suffix}.json",
+                _serialise_attribution(results[windage], names, len(specs), windage),
+            )
 
-    culprit_channels = next(
-        (
-            entry.channels
-            for entry in (*default_result.candidates, *default_result.unrankable)
-            if entry.mmsi == CULPRIT_MMSI
-        ),
-        None,
+    culprit_channels = (
+        None
+        if default_result is None
+        else next(
+            (
+                entry.channels
+                for entry in (*default_result.candidates, *default_result.unrankable)
+                if entry.mmsi == CULPRIT_MMSI
+            ),
+            None,
+        )
     )
     culprit_t_star = None if culprit_channels is None else culprit_channels.t_star
     recovery = _recovery(
@@ -1117,19 +1328,53 @@ def build_sc01(root: Path) -> dict[str, Any]:
                 "observed_geometry": geometry,
             },
             "recovered": recovery,
+            "placement": placement,
+            "placement_note": (
+                "Measured against data/geo/baltic_land_mask.geojson before anything "
+                "was written. A scenario whose oil sits on land is not a scenario, "
+                "and scripts/land_guard.py raises rather than emitting one."
+            ),
+            "attribution_gate": {
+                "passed": gate_decision.passed,
+                "blocked_by": gate_decision.code,
+                "reason": gate_decision.reason or None,
+                "note": (
+                    "Attribution runs only for a detection that reads as oil. A "
+                    "look-alike does not name a culprit."
+                ),
+                "unavailable": (
+                    {}
+                    if not gate_decision.passed
+                    else {
+                        "blocked_by": GATE_PASSED,
+                        "reason": GATE_PASSED,
+                    }
+                ),
+            },
             "identified_culprit_mmsi": (
-                None if default_result.culprit is None else default_result.culprit.mmsi
+                None
+                if default_result is None or default_result.culprit is None
+                else default_result.culprit.mmsi
             ),
             "identified_correctly": (
-                default_result.culprit is not None
+                default_result is not None
+                and default_result.culprit is not None
                 and default_result.culprit.mmsi == CULPRIT_MMSI
             ),
-            "verdict": default_result.verdict,
+            "verdict": "UNATTRIBUTED" if default_result is None else default_result.verdict,
         },
     )
 
     events = _ws_sc01(
-        scene, detection, geometry, default_run, default_density, default_result, names, len(specs)
+        scene,
+        detection,
+        geometry,
+        default_run,
+        default_density,
+        default_result,
+        names,
+        len(specs),
+        gate_decision,
     )
     _write_json(
         directory / "ws.json",
@@ -1149,18 +1394,30 @@ def build_sc01(root: Path) -> dict[str, Any]:
         },
     )
 
+    culprit = None if default_result is None else default_result.culprit
     return {
         "code": code,
         "name": "Baltic Night Discharge",
-        "verdict": default_result.verdict,
-        "culprit_mmsi": (
-            None if default_result.culprit is None else default_result.culprit.mmsi
-        ),
-        "lr": (None if default_result.culprit is None else round(default_result.culprit.lr, 2)),
+        "verdict": "UNATTRIBUTED" if default_result is None else default_result.verdict,
+        "attribution_issued": gate_decision.passed,
+        "attribution_blocked_by": gate_decision.code,
+        "p_oil": detection["p_oil"],
+        "detection_class": detection["class"],
+        "culprit_mmsi": None if culprit is None else culprit.mmsi,
+        "lr": None if culprit is None else round(culprit.lr, 2),
         "n_vessels_in_frame": len(specs),
-        "n_ranked": len(default_result.candidates),
+        "n_ranked": 0 if default_result is None else len(default_result.candidates),
         "origin_error_km": recovery["origin_error_km"],
         "t_star_error_min": recovery["t_star_error_min"],
+        "slick_clearance_km": placement["observed_slick"]["clearance_km"],
+        "raster": raster_name,
+        "raster_bytes": raster_bytes,
+        "raster_badge": SYNTHETIC_RASTER_BADGE,
+        "unavailable": (
+            {"attribution_blocked_by": GATE_PASSED}
+            if gate_decision.passed
+            else {"culprit_mmsi": gate_decision.reason, "lr": gate_decision.reason}
+        ),
         "artefacts": sorted(p.stem for p in directory.glob("*.json")),
     }
 
@@ -1171,16 +1428,22 @@ def _ws_sc01(
     geometry: dict[str, float],
     run: solver_mod.DriftRun,
     run_density: density_mod.RunDensity,
-    result: fusion_mod.FrameResult,
+    result: fusion_mod.FrameResult | None,
     names: dict[int, str],
     n_vessels: int,
+    gate_decision: gate_mod.GateDecision,
 ) -> list[dict[str, Any]]:
-    """§12 budgets SC-01 at 110 s. Messages carry numbers this run produced."""
+    """§12 budgets SC-01 at 110 s. Messages carry numbers this run produced.
+
+    `result` is None when the gate withheld attribution. The sequence then stops
+    after DISCRIMINATING with a refusal, because that is what actually happened —
+    a rewind whose conclusion is discarded is theatre.
+    """
     events = [
         _event(
             "SEGMENTING",
             0.05,
-            f"Loading scene {scene['id']} — Bornholm Basin, {T0:%Y-%m-%d %H:%MZ}",
+            f"Loading scene {scene['id']} — eastern Bornholm Basin, {T0:%Y-%m-%d %H:%MZ}",
             0,
             scene_id=scene["id"],
             badges=scene["badges"],
@@ -1207,9 +1470,29 @@ def _ws_sc01(
             note=detection["note"],
             factors=detection["shap_factors"],
             wind_gate_violated=detection["wind_gate_violated"],
+            badges=scene["badges"],
+            pixel_features_note=SYNTHETIC_PIXELS,
             unavailable=detection["unavailable"],
         ),
     ]
+
+    if result is None:
+        events.append(
+            _event(
+                "DONE",
+                1.0,
+                "No attribution issued — the detection does not read as oil, so no "
+                "vessel is named. Case queued for cross-check.",
+                26_000,
+                verdict="UNATTRIBUTED",
+                attribution_issued=False,
+                blocked_by=gate_decision.code,
+                reason=gate_decision.reason,
+                recommendation=gate_decision.recommendation,
+                n_vessels_in_frame=n_vessels,
+            )
+        )
+        return events
 
     last = len(run_density.snapshots) - 1
     rewind_indices = [min(i, last) for i in (4, 8, 12, 16, 20, 24)]
@@ -1315,6 +1598,16 @@ def build_sc02(root: Path) -> dict[str, Any]:
     )
     formation_utm = Polygon(ring).buffer(0)
 
+    # Same guard as SC-01. A look-alike sitting on land is no more shippable than
+    # a slick that does; the wind-gate refusal is only meaningful over water.
+    mask = land_guard.load_mask()
+    placement = {
+        "mask_source": mask.source,
+        "dark_formation": land_guard.check_polygon(
+            mask, f"{code} dark formation", _to_wgs84(formation_utm, frame)
+        ).as_dict(),
+    }
+
     specs = list(OTHER_VESSELS[:12])
     tracks, serialised_tracks = _build_frame_tracks(
         specs, frame, SC02_T0, centre_m, SC02_T0, 0.0, gaps={}
@@ -1330,7 +1623,7 @@ def build_sc02(root: Path) -> dict[str, Any]:
         wind_dir_deg=112.0,
         frame=frame,
     )
-    detection = _detection(
+    detection, discriminator_result = _detection(
         f"{code}-D1",
         code,
         formation_utm,
@@ -1343,25 +1636,23 @@ def build_sc02(root: Path) -> dict[str, Any]:
         "classification are engine output; the polygon is not."
     )
 
-    gate_reason = (
-        f"wind gate violated ({SC02_WIND_MS} m/s < {settings.wind_gate_min_ms} m/s): below "
-        f"{settings.wind_gate_min_ms} m/s the sea surface itself mimics oil, so the dark "
-        f"formation is not trustworthy evidence of a slick (§5.2). It classifies "
-        f"{detection['class']} at P(oil) {detection['p_oil']:.2f} — a rule-based score "
-        "over the §5.2 physics, not a trained-model output — and the gate alone would "
-        "withhold attribution regardless of what that number said."
+    # The refusal is engine output, not prose written here. It used to be a
+    # hand-assembled dict, which meant SC-02's honesty lived in this file rather
+    # than in the pipeline and covered exactly one scenario (§2.2).
+    gate_decision = gate_mod.evaluate(
+        discriminator_result,
+        detection["wind_gate_violated"],
+        detection["wind_gate_reason"],
     )
-    attribution_refusal = {
-        "issued": False,
-        "verdict": "UNATTRIBUTED",
-        "reason": gate_reason,
-        "recommendation": (
-            "Queue for cross-check against a second pass in a wind window of "
-            f"{settings.wind_gate_min_ms}–{settings.wind_gate_max_ms} m/s."
-        ),
-        "candidates": [],
-        "n_vessels_in_frame": len(specs),
-    }
+    if gate_decision.passed:
+        raise RuntimeError(
+            f"{code} is the look-alike trap and must not attribute, but the gate "
+            f"passed it: class={detection['class']} p_oil={detection['p_oil']} "
+            f"wind_gate_violated={detection['wind_gate_violated']}. Refusing to "
+            "write a scenario that contradicts its own purpose (§12 P0-CRITICAL)."
+        )
+    attribution_refusal = gate_decision.as_refusal(len(specs))
+    gate_reason = gate_decision.reason
     detection["attribution"] = attribution_refusal
 
     _write_json(directory / "scene.json", scene)
@@ -1410,7 +1701,9 @@ def build_sc02(root: Path) -> dict[str, Any]:
             34_000,
             verdict="UNATTRIBUTED",
             attribution_issued=False,
+            blocked_by=gate_decision.code,
             reason=gate_reason,
+            recommendation=gate_decision.recommendation,
             n_vessels_in_frame=len(specs),
         ),
     ]
@@ -1430,9 +1723,13 @@ def build_sc02(root: Path) -> dict[str, Any]:
         "name": "The Look-alike Trap",
         "verdict": "UNATTRIBUTED",
         "attribution_issued": False,
+        "attribution_blocked_by": gate_decision.code,
         "wind_gate_violated": True,
+        "p_oil": detection["p_oil"],
+        "detection_class": detection["class"],
         "n_detections": 1,
         "n_vessels_in_frame": len(specs),
+        "formation_clearance_km": placement["dark_formation"]["clearance_km"],
         "artefacts": sorted(p.stem for p in directory.glob("*.json")),
     }
 
@@ -1535,17 +1832,55 @@ def main() -> int:
                 "is not the §9-frozen one: regenerate and freeze when Tier 1 or Tier 2 "
                 "data lands."
             ),
-            "data_tier": "none — no SAR raster in this build; §0 Tier 4 was NOT invoked",
-            "badges": [AUTHORED_SCENE_BADGE, SIMULATED_AIS_BADGE],
+            "data_tier": (
+                "§0 Tier 4 ELECTED for SC-01's raster only — synthetic Sigma0 pixels, "
+                "rendered from the authored slick polygon by scripts/synth_sar.py. An "
+                "explicit human decision, not a fallback: no code path degrades into "
+                "it, and SC-02 and SC-03 carry no raster at all. Scenario imagery for "
+                "the demo — NOT evidence that detection works on real SAR, and no "
+                "detection metric may be quoted from it (§16)."
+            ),
+            "tier_4": {
+                "elected": True,
+                "scope": "SC-01 raster only",
+                "badge": SYNTHETIC_RASTER_BADGE,
+                "generator": "scripts/synth_sar.py",
+                "method_note": (
+                    "Dark-region geometry is the slick polygon itself; damping is the "
+                    "midpoint of the 3–10 dB range CLAUDE.md states for mineral oil; "
+                    "edge sharpness is one resolution cell; speckle is Gamma at an ENL "
+                    "derived from the IW GRDH product chain; background is the drift "
+                    "run's own wind field. A method, not a set of knobs."
+                ),
+                "no_metric_from_it": (
+                    "§16 — this raster establishes nothing about detection accuracy. It "
+                    "exists so the two §5.2 pixel terms resolve."
+                ),
+            },
+            "land_guard": {
+                "module": "scripts/land_guard.py",
+                "mask": "data/geo/baltic_land_mask.geojson",
+                "particle_tolerance": land_guard.MAX_PARTICLE_LAND_FRACTION,
+                "note": (
+                    "Slick vertices, release point and every drift snapshot are checked "
+                    "against a real land polygon before anything is written. SC-01 was "
+                    "previously emitted onto Bornholm with ~90% of its particles ashore; "
+                    "the guard raises rather than warns, so it cannot happen quietly."
+                ),
+            },
+            "badges": [AUTHORED_SCENE_BADGE, SIMULATED_AIS_BADGE, SYNTHETIC_RASTER_BADGE],
             "pending": [
                 "Real SAR scenes (Zenodo Part III holdout 146–150, or §0 Tier 2 fallback)",
                 "Real Danish AIS background traffic — every track here is injected",
                 "Segmentation: the slick polygons are authored, not detected",
                 "A trained LightGBM discriminator: p_oil and class here come from the "
                 "rule-based §5.2 physics scorer, labelled method=rule_based",
+                "Real SAR pixels. SC-01's raster is synthetic (§0 Tier 4, elected) and "
+                "SC-02/SC-03 have none, so no detection metric is quotable anywhere in "
+                "this set (§16)",
                 "SHAP factors: the factor breakdown is rule-based, basis=rule_based, "
                 "not SHAP over a trained model",
-                "Radiometric and texture features: no pixels to measure",
+                "Radiometric and texture features on SC-02: no pixels to measure there",
                 "distance_to_coast_km: no coastline dataset bundled",
             ],
             "engine": {
@@ -1561,9 +1896,23 @@ def main() -> int:
     for summary in summaries:
         print(f"  {summary['code']}  {summary['name']}")
         for key, value in summary.items():
-            if key not in ("code", "name", "artefacts"):
+            if key not in ("code", "name", "artefacts", "unavailable"):
                 print(f"      {key}: {value}")
     print()
+
+    # SC-01 exists to attribute. If the gate withheld it the set is still honest,
+    # but it is not the demo §12 describes, and that must not be discovered by
+    # someone scrolling back through the log.
+    sc01 = next(entry for entry in summaries if entry["code"] == "SC-01")
+    if not sc01["attribution_issued"]:
+        print("  " + "!" * 68)
+        print(f"  SC-01 DID NOT ATTRIBUTE — blocked by: {sc01['attribution_blocked_by']}")
+        print(f"  class={sc01['detection_class']} p_oil={sc01['p_oil']}")
+        print("  The gate is working; the scenario is not. Fix the physics, not the")
+        print("  weights (§2.2) — a scorer tuned to reproduce a target is the thing")
+        print("  the whole set exists to avoid.")
+        print("  " + "!" * 68)
+        print()
     return 0
 
 

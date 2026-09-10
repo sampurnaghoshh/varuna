@@ -1,9 +1,9 @@
 {
   "scenario": "SC-01",
   "timings_ms": {
-    "forward_drift": 739,
-    "backward_drift": 1146,
-    "attribution_all_variants": 17
+    "forward_drift": 602,
+    "backward_drift": 980,
+    "attribution_all_variants": 18
   },
   "timings_note": "Measured engine time on the fixture-build machine. Each event's playback_offset_ms is authored demo pacing (§12) and is not a timing.",
   "total_playback_ms": 100000,
@@ -11,19 +11,19 @@
     {
       "stage": "SEGMENTING",
       "progress": 0.05,
-      "message": "Loading scene SC-01 — Bornholm Basin, 2024-03-14 03:40Z",
+      "message": "Loading scene SC-01 — eastern Bornholm Basin, 2024-03-14 03:40Z",
       "playback_offset_ms": 0,
       "payload": {
         "scene_id": "SC-01",
         "badges": [
-          "SIMULATED SLICK — NO SAR IMAGERY IN THIS BUILD"
+          "SYNTHETIC — NOT SAR IMAGERY"
         ]
       }
     },
     {
       "stage": "SEGMENTING",
       "progress": 0.18,
-      "message": "1 dark formation delineated — 77.0 km², major axis 22.5 km, bearing 60°",
+      "message": "1 dark formation delineated — 77.5 km², major axis 22.3 km, bearing 59°",
       "playback_offset_ms": 6000,
       "payload": {
         "detection_id": "SC-01-D1",
@@ -34,34 +34,50 @@
     {
       "stage": "DISCRIMINATING",
       "progress": 0.28,
-      "message": "Classified look-alike — P(oil) 0.48 (rule-based §5.2 physics; no trained model in this build)",
+      "message": "Classified oil — P(oil) 0.89 (rule-based §5.2 physics; no trained model in this build)",
       "playback_offset_ms": 16000,
       "payload": {
-        "p_oil": 0.4814,
-        "p_class": "look-alike",
+        "p_oil": 0.8947,
+        "p_class": "oil",
         "method": "rule_based",
         "note": "No trained discriminator is present in this build, so P(oil) comes from a deterministic rule-based scorer over the §5.2 physics — the wind gate, shape complexity, eccentricity and slick area — not from a trained model. It carries no validation metric, no split and no n, because there is no model to have validated.",
         "factors": [
           {
+            "feature": "edge_gradient_mean",
+            "value": 1.91102173356313,
+            "contribution": 0.9922945058246071,
+            "direction": "oil",
+            "rationale": "oil damps capillary waves sharply at its boundary; a low-wind cell fades into the surrounding sea",
+            "basis": "rule_based"
+          },
+          {
+            "feature": "contrast_db",
+            "value": -6.414590367839942,
+            "contribution": 0.8358662940122752,
+            "direction": "oil",
+            "rationale": "oil sits 3-10 dB below the surrounding sea; a marginal look-alike manages 1-3 dB",
+            "basis": "rule_based"
+          },
+          {
             "feature": "eccentricity",
-            "value": 0.976,
-            "contribution": 0.5177119071956912,
+            "value": 0.9736,
+            "contribution": 0.7381520344142671,
             "direction": "oil",
             "rationale": "a deliberate discharge while underway lays oil along the track, so it is elongated; a weather feature has no such axis",
             "basis": "rule_based"
           },
           {
             "feature": "shape_complexity",
-            "value": 3.5776,
-            "contribution": 0.5151307891122656,
+            "value": 3.4759,
+            "contribution": 0.6864884923321193,
             "direction": "oil",
             "rationale": "real slicks are sheared by the drift that moved them and read as filamentary; low-wind cells and biogenic films stay broad and rounded",
             "basis": "rule_based"
           },
           {
             "feature": "area_km2",
-            "value": 76.9556,
-            "contribution": -0.2874947612507788,
+            "value": 77.5346,
+            "contribution": -0.4149965774688681,
             "direction": "look-alike",
             "rationale": "scored as a band, not a direction: below it a formation is speckle, above it the footprint belongs to weather — a wind shadow spans hundreds of km², a discharge does not",
             "basis": "rule_based"
@@ -69,22 +85,18 @@
           {
             "feature": "wind_speed_ms",
             "value": 6.74,
-            "contribution": 0.2787878787878788,
+            "contribution": 0.4,
             "direction": "oil",
             "rationale": "wind 6.7 m/s is inside the 3.0-12.0 m/s gate",
             "basis": "rule_based"
           }
         ],
         "wind_gate_violated": false,
+        "badges": [
+          "SYNTHETIC — NOT SAR IMAGERY"
+        ],
+        "pixel_features_note": "measured from the SC-01 synthetic Sigma0 raster — §0 Tier 4 scenario imagery, not real SAR; no detection metric may be quoted from it (§16)",
         "unavailable": {
-          "mean_sigma0_db": "no SAR raster in this build; radiometric and texture features need pixels",
-          "std_sigma0_db": "no SAR raster in this build; radiometric and texture features need pixels",
-          "contrast_db": "no SAR raster in this build; radiometric and texture features need pixels",
-          "edge_gradient_mean": "no SAR raster in this build; radiometric and texture features need pixels",
-          "edge_gradient_std": "no SAR raster in this build; radiometric and texture features need pixels",
-          "glcm_homogeneity": "no SAR raster in this build; radiometric and texture features need pixels",
-          "glcm_contrast": "no SAR raster in this build; radiometric and texture features need pixels",
-          "glcm_entropy": "no SAR raster in this build; radiometric and texture features need pixels",
           "distance_to_coast_km": "no coastline dataset bundled in this build",
           "model_version": "no trained model ran; a rule-based score has no model version"
         }
@@ -97,7 +109,7 @@
       "playback_offset_ms": 24000,
       "payload": {
         "t_offset_min": -120,
-        "hull_area_km2": 102.42,
+        "hull_area_km2": 104.63,
         "stretch_factor": 1.0,
         "n_particles": 5000,
         "field_source": "synthetic"
@@ -110,7 +122,7 @@
       "playback_offset_ms": 31000,
       "payload": {
         "t_offset_min": -240,
-        "hull_area_km2": 117.79,
+        "hull_area_km2": 119.89,
         "stretch_factor": 1.0,
         "n_particles": 5000,
         "field_source": "synthetic"
@@ -123,7 +135,7 @@
       "playback_offset_ms": 38000,
       "payload": {
         "t_offset_min": -360,
-        "hull_area_km2": 133.71,
+        "hull_area_km2": 133.02,
         "stretch_factor": 1.0,
         "n_particles": 5000,
         "field_source": "synthetic"
@@ -136,7 +148,7 @@
       "playback_offset_ms": 45000,
       "payload": {
         "t_offset_min": -480,
-        "hull_area_km2": 144.3,
+        "hull_area_km2": 145.01,
         "stretch_factor": 1.0,
         "n_particles": 5000,
         "field_source": "synthetic"
@@ -149,7 +161,7 @@
       "playback_offset_ms": 52000,
       "payload": {
         "t_offset_min": -600,
-        "hull_area_km2": 159.01,
+        "hull_area_km2": 157.85,
         "stretch_factor": 1.0,
         "n_particles": 5000,
         "field_source": "synthetic"
@@ -162,7 +174,7 @@
       "playback_offset_ms": 59000,
       "payload": {
         "t_offset_min": -720,
-        "hull_area_km2": 167.32,
+        "hull_area_km2": 169.29,
         "stretch_factor": 1.0,
         "n_particles": 5000,
         "field_source": "synthetic"
@@ -192,16 +204,16 @@
     {
       "stage": "FUSING",
       "progress": 0.94,
-      "message": "Top candidate MMSI 220517000 (NORD ASTRAEA) — LR 73.2, log LR 4.29 nats",
+      "message": "Top candidate MMSI 220517000 (NORD ASTRAEA) — LR 72.9, log LR 4.29 nats",
       "playback_offset_ms": 88000,
       "payload": {
         "mmsi": 220517000,
-        "lr": 73.215,
-        "log_lr": 4.2934,
+        "lr": 72.934,
+        "log_lr": 4.2896,
         "terms_nats": {
-          "s1": 1.344,
-          "s2": 0.989,
-          "s3": 0.1019,
+          "s1": 1.3479,
+          "s2": 0.9818,
+          "s3": 0.1014,
           "s4": 0.7885,
           "prior": 1.07
         }
@@ -210,11 +222,11 @@
     {
       "stage": "DONE",
       "progress": 1.0,
-      "message": "MODERATE — MMSI 220517000 (NORD ASTRAEA), LR 73.2, posterior 0.82",
+      "message": "MODERATE — MMSI 220517000 (NORD ASTRAEA), LR 72.9, posterior 0.82",
       "playback_offset_ms": 100000,
       "payload": {
         "verdict": "MODERATE",
-        "none_of_the_above_posterior": 0.1115,
+        "none_of_the_above_posterior": 0.1124,
         "n_vessels_in_frame": 23,
         "culprit_mmsi": 220517000
       }

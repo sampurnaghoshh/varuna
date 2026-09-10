@@ -266,8 +266,9 @@
   "attribution": {
     "issued": false,
     "verdict": "UNATTRIBUTED",
-    "reason": "wind gate violated (2.1 m/s < 3.0 m/s): below 3.0 m/s the sea surface itself mimics oil, so the dark formation is not trustworthy evidence of a slick (§5.2). It classifies look-alike at P(oil) 0.03 — a rule-based score over the §5.2 physics, not a trained-model output — and the gate alone would withhold attribution regardless of what that number said.",
-    "recommendation": "Queue for cross-check against a second pass in a wind window of 3.0–12.0 m/s.",
+    "blocked_by": "wind_gate",
+    "reason": "No attribution issued: wind 2.1 m/s is below the 3.0 m/s gate: at that speed the sea surface itself mimics oil, so a dark formation is not trustworthy evidence of a slick It classifies look-alike at P(oil) 0.027 — rule_based — and the gate alone would withhold attribution regardless of what that number said (§5.2).",
+    "recommendation": "Queue for cross-check against a second pass in a wind window of 3–12 m/s.",
     "candidates": [],
     "n_vessels_in_frame": 12
   }

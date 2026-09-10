@@ -6,6 +6,12 @@
 A sub-threshold candidate is never returned as a culprit (§5.4). UNATTRIBUTED
 carries a queued case and a cross-check recommendation, and is a 200, not an
 error.
+
+Before any of that: `attribution.gate.evaluate` decides whether this detection
+may be attributed at all. A formation that did not classify as oil, or that
+violated the §5.2 wind gate, never reaches the channels — it returns the gate's
+refusal payload, which is also a 200. That check is not optional and is not
+reimplemented here; a detection that reads look-alike must not name a culprit.
 """
 
 from datetime import datetime

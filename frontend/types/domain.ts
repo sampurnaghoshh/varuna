@@ -49,6 +49,43 @@ export interface Scene {
   raster_path: string | null;
   badges: string[];
   unavailable: Unavailable;
+  /**
+   * Present only where a raster exists. In this build that is SC-01 alone, whose
+   * pixels are synthetic (§0 Tier 4, elected) - `badges` carries
+   * "SYNTHETIC - NOT SAR IMAGERY" and is rendered verbatim, so no component
+   * matches on this field to decide what to say.
+   */
+  raster_shape_px?: [number, number];
+  raster_crs?: string;
+  raster_units?: string;
+  /** How the image was made, parameter by parameter, for the Q&A answer. */
+  raster_method?: RasterMethod;
+  provenance?: Record<string, string>;
+}
+
+/** Every field traces to something outside the generator. See scripts/synth_sar.py. */
+export interface RasterMethod {
+  badge: string;
+  tier: string;
+  not_a_claim: string;
+  dark_region_geometry: string;
+  slick_pixels: number;
+  damping_db: number;
+  damping_rationale: string;
+  edge_smoothing_cells: number;
+  edge_rationale: string;
+  speckle_distribution: string;
+  equivalent_number_of_looks: number;
+  speckle_rationale: string;
+  background_source: string;
+  wind_law: string;
+  range_trend_db_per_km: number;
+  range_trend_rationale: string;
+  background_mean_db_before_speckle: number;
+  seed: number;
+  shape_px: [number, number];
+  pixel_spacing_m: number;
+  incidence_angle_deg: number;
 }
 
 export interface SceneResponse extends Envelope {

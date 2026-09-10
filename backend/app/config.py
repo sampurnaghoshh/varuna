@@ -39,6 +39,9 @@ class Settings(BaseSettings):
     ais_dir: Path = Path("/data/ais")
     models_dir: Path = Path("/data/models")
     fixtures_dir: Path = Path("/data/fixtures")
+    # Coastline basemap and the land mask the fixture generator's placement
+    # guard reads. Not a §9 read-only input: fetch_coastline.py writes here.
+    geo_dir: Path = Path("/data/geo")
 
     # -------------------------------------------- §5.1 reverse-drift solver ----
 

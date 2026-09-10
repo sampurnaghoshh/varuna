@@ -39,6 +39,20 @@ SCENARIOS = ("SC-01", "SC-02", "SC-03")
 
 CULPRIT_MMSI = 220517000
 
+# The eight image-derived §5.2 features. Only SC-01 has pixels to measure them from.
+PIXEL_FEATURES = frozenset(
+    {
+        "mean_sigma0_db",
+        "std_sigma0_db",
+        "contrast_db",
+        "edge_gradient_mean",
+        "edge_gradient_std",
+        "glcm_homogeneity",
+        "glcm_contrast",
+        "glcm_entropy",
+    }
+)
+
 
 @pytest.fixture(scope="session", autouse=True)
 def _fixtures_on_disk() -> None:
@@ -115,9 +129,92 @@ def test_manifest_badges_cover_the_simulated_inputs(manifest: dict[str, Any]) ->
     assert "INJECTED" in badges
 
 
-def test_tier_4_was_not_invoked(manifest: dict[str, Any]) -> None:
-    """No synthetic SAR pixels anywhere: §0 Tier 4 is a human decision, not a default."""
-    assert "Tier 4 was NOT invoked" in manifest["data_tier"]
+def test_tier_4_is_declared_wherever_it_was_invoked(manifest: dict[str, Any]) -> None:
+    """§0 Tier 4 is a human decision. Having been made, it must be visible.
+
+    SC-01 renders synthetic Sigma0 pixels so the two §5.2 pixel terms resolve.
+    That is Tier 4 and this asserts the set says so out loud: the election, its
+    scope, its badge, and that no metric may be quoted from it (§16). The check
+    that used to live here — that Tier 4 was never invoked — could not survive
+    the election, but the honesty it protected is what is tested instead.
+    """
+    tier_4 = manifest["tier_4"]
+
+    assert tier_4["elected"] is True
+    assert "SC-01" in tier_4["scope"]
+    assert "SYNTHETIC" in tier_4["badge"]
+    assert "Tier 4" in manifest["data_tier"]
+    assert "§16" in tier_4["no_metric_from_it"]
+
+
+def test_tier_4_did_not_spread_beyond_its_scope(manifest: dict[str, Any]) -> None:
+    """Elected for SC-01's raster alone. Nothing else may have quietly acquired pixels.
+
+    §0's fear is a pipeline that starts inventing its own input. The election is
+    a decision about one scenario, and a second scenario growing a raster without
+    a second decision is exactly the drift that section forbids.
+    """
+    del manifest
+    for code in SCENARIOS:
+        scene = loader.load(code, "scene")
+        if code == "SC-01":
+            assert scene["raster_path"] is not None
+            continue
+        assert scene["raster_path"] is None, f"{code} acquired a raster without a decision"
+        assert "raster_method" not in scene
+
+
+def test_the_synthetic_raster_is_badged_everywhere_it_surfaces() -> None:
+    """§2.3. Simulated data is labelled as simulated, visibly — not just in a manifest."""
+    scene = loader.load("SC-01", "scene")
+    detection = loader.load("SC-01", "detection")
+    badge = scene["raster_method"]["badge"]
+
+    assert badge in scene["badges"]
+
+    # Every feature measured from those pixels says where it came from.
+    measured = [
+        name
+        for name, value in detection["features"].items()
+        if value is not None and name in PIXEL_FEATURES
+    ]
+    assert measured, "the raster exists but no pixel feature was measured from it"
+    for name in measured:
+        provenance = detection["feature_provenance"][name]
+        assert "Tier 4" in provenance and "not real SAR" in provenance
+
+    # And the stage event that puts P(oil) on screen carries it too.
+    discriminating = [
+        event
+        for event in loader.load_ws_sequence("SC-01")
+        if event["stage"] == "DISCRIMINATING"
+    ]
+    assert discriminating
+    assert badge in discriminating[0]["payload"]["badges"]
+
+
+def test_the_raster_method_is_stated_rather_than_a_set_of_knobs() -> None:
+    """"How did you make this image" has to have an answer that is not "we picked numbers".
+
+    Each parameter records the outside thing it traces to. The damping in
+    particular must NOT be derived from the scorer's own contrast pivot — an
+    image built from the constants that score it would make P(oil) meaningless.
+    """
+    method = loader.load("SC-01", "scene")["raster_method"]
+
+    assert "polygon" in method["dark_region_geometry"]
+    assert "midpoint" in method["damping_rationale"]
+    assert "circular" in method["damping_rationale"]
+    assert "resolution cell" in method["edge_rationale"]
+    assert "Gamma" in method["speckle_distribution"]
+    assert method["equivalent_number_of_looks"] > 1.0
+    assert "NOT CMOD" in method["wind_law"]
+
+    # The damping is the midpoint of the range CLAUDE.md states for oil, and the
+    # slick it produced sits that far below its surroundings.
+    contrast_db = loader.load("SC-01", "detection")["features"]["contrast_db"]
+    assert contrast_db is not None
+    assert -10.0 <= contrast_db <= -3.0
 
 
 def test_every_scenario_and_artefact_in_the_manifest_loads(manifest: dict[str, Any]) -> None:
@@ -131,6 +228,60 @@ def test_every_scenario_and_artefact_in_the_manifest_loads(manifest: dict[str, A
 
 
 # ------------------------------------------------------------------- SC-01 ----
+
+
+def test_sc01_classifies_as_oil_before_it_attributes(manifest: dict[str, Any]) -> None:
+    """The contradiction that shipped: `look-alike` at P(oil) 0.481, and a culprit.
+
+    A scenario cannot say "this is probably not oil" and "that ship spilled it"
+    in the same payload. The gate (§5.2's principle, applied to the class) makes
+    the second conditional on the first.
+    """
+    detection = loader.load("SC-01", "detection")
+    summary = _summary(manifest, "SC-01")
+
+    assert detection["class"] == "oil"
+    assert detection["p_oil"] >= settings.discriminator_oil_threshold
+    assert summary["attribution_issued"] is True
+    assert summary["attribution_blocked_by"] is None
+    assert loader.has_fixture("SC-01", "attribution")
+    assert "attribution" not in detection, (
+        "a gated refusal is present on a detection that passed the gate"
+    )
+
+
+def test_sc01_pixel_features_resolved_rather_than_coming_back_null() -> None:
+    """The point of electing Tier 4: contrast_db and edge_gradient_mean have values.
+
+    Both are §5.2 rule terms. With no raster they were None, the score shrank
+    toward the base rate, and SC-01 landed under the oil threshold.
+    """
+    detection = loader.load("SC-01", "detection")
+
+    assert detection["features"]["contrast_db"] is not None
+    assert detection["features"]["edge_gradient_mean"] is not None
+    assert detection["evidence_fraction"] == pytest.approx(1.0)
+    scored = {factor["feature"] for factor in detection["shap_factors"]}
+    assert {"contrast_db", "edge_gradient_mean"} <= scored
+
+
+def test_sc01_is_entirely_over_water(manifest: dict[str, Any]) -> None:
+    """The regression. Recorded as a measurement, not asserted in a comment.
+
+    Slick vertices, release point and every particle snapshot across all three
+    windage variants, checked against a real land polygon at generation time.
+    """
+    placement = loader.load("SC-01", "truth")["placement"]
+
+    for key in ("release_point", "release_corridor", "observed_slick"):
+        assert placement[key]["n_on_land"] == 0, f"{key} has geometry on land"
+        assert placement[key]["clearance_km"] > 0.0
+
+    for key in ("forward_particles", "backward_particles"):
+        assert placement[key]["snapshots_checked"] > 0
+        assert placement[key]["max_fraction_on_land"] <= placement[key]["tolerance"]
+
+    assert _summary(manifest, "SC-01")["slick_clearance_km"] > 5.0
 
 
 def test_sc01_names_the_authored_culprit(manifest: dict[str, Any]) -> None:
@@ -282,6 +433,22 @@ def test_sc01_variant_particle_subsampling_is_declared() -> None:
 # --------------------------------------------------------- SC-02, SC-03 ----
 
 
+def test_the_refusal_is_engine_output_not_authored_prose() -> None:
+    """SC-02's withholding comes from `attribution.gate`, not from the generator.
+
+    It used to be a dict hand-assembled in build_fixtures.py, which put the
+    honesty in the prose rather than in the pipeline and covered exactly one
+    scenario. The reason code is the evidence that a shared component produced it.
+    """
+    from app.attribution import gate
+
+    refusal = loader.load("SC-02", "detection")["attribution"]
+
+    assert refusal["blocked_by"] == gate.BLOCKED_WIND_GATE
+    assert refusal["issued"] is False
+    assert refusal["candidates"] == []
+
+
 def test_sc02_refuses_to_attribute(manifest: dict[str, Any]) -> None:
     """P0-CRITICAL. It ships, or the demo does not run (§12).
 
@@ -399,10 +566,19 @@ def test_every_ais_track_is_badged_as_simulated(code: str) -> None:
 
 @pytest.mark.parametrize("code", SCENARIOS)
 def test_scene_geometry_carries_its_authored_badge(code: str) -> None:
+    """Every scene says it is authored. SC-01 additionally says its pixels are.
+
+    `raster_path` is no longer None everywhere — SC-01 has one — so the badge is
+    what carries the claim, not the absence of a file.
+    """
     scene = loader.load(code, "scene")
     assert scene["badges"]
-    assert scene["raster_path"] is None
     assert scene["source"] == "authored"
+    if code == "SC-01":
+        assert scene["raster_path"] is not None
+        assert any("SYNTHETIC" in badge for badge in scene["badges"])
+    else:
+        assert scene["raster_path"] is None
 
 
 def test_drift_density_is_run_normalised_and_declares_its_coarsening() -> None:

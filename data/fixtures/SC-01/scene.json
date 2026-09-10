@@ -2,51 +2,84 @@
   "id": "SC-01",
   "product_id": "VARUNA_FIXTURE_SC01",
   "name": "Baltic Night Discharge",
-  "sensor": "Sentinel-1 (footprint authored; no raster in this build)",
+  "sensor": "Sentinel-1 geometry, synthetic pixels (§0 Tier 4, elected)",
   "acq_time": "2024-03-14T03:40:00+00:00",
   "footprint": {
     "type": "Polygon",
     "coordinates": [
       [
         [
-          15.79521,
-          54.73729
+          17.08677,
+          55.07894
         ],
         [
-          15.81376,
-          55.65737
+          17.13606,
+          55.99844
         ],
         [
-          14.18624,
-          55.65737
+          15.49429,
+          56.01595
         ],
         [
-          14.20479,
-          54.73729
+          15.48288,
+          55.09586
         ],
         [
-          15.79521,
-          54.73729
+          17.08677,
+          55.07894
         ]
       ]
     ]
   },
   "centre": {
-    "lon": 15.0,
-    "lat": 55.2
+    "lon": 16.3,
+    "lat": 55.55
   },
-  "incidence_angle_deg": null,
+  "incidence_angle_deg": 35.0,
   "wind_speed_ms": 6.74,
   "wind_dir_deg": 159.2,
-  "pixel_spacing_m": null,
+  "pixel_spacing_m": 50.0,
   "source": "authored",
-  "raster_path": null,
+  "raster_path": "sigma0_vv_db.tif",
   "badges": [
-    "SIMULATED SLICK — NO SAR IMAGERY IN THIS BUILD"
+    "SYNTHETIC — NOT SAR IMAGERY"
   ],
-  "unavailable": {
-    "raster_path": "no SAR scene on disk; Zenodo Part III unavailable at build time",
-    "incidence_angle_deg": "no SAR raster in this build; radiometric and texture features need pixels",
-    "pixel_spacing_m": "no SAR raster in this build; radiometric and texture features need pixels"
+  "unavailable": {},
+  "raster_shape_px": [
+    2048,
+    2048
+  ],
+  "raster_crs": "EPSG:32633",
+  "raster_units": "dB (Sigma0 VV), stored as int16 hundredths",
+  "raster_method": {
+    "badge": "SYNTHETIC — NOT SAR IMAGERY",
+    "tier": "§0 Tier 4 — synthetic SAR, elected explicitly for SC-01",
+    "not_a_claim": "Scenario imagery for the demo. Not evidence that detection works on real SAR, and no detection metric may be quoted from it (§16).",
+    "dark_region_geometry": "the slick polygon itself — alpha hull of the real 6 h forward drift run — rasterised; no shape is drawn here",
+    "slick_pixels": 31011,
+    "damping_db": 6.5,
+    "damping_rationale": "midpoint of the 3.0–10.0 dB range CLAUDE.md states for mineral oil against the surrounding sea; deliberately not derived from the scorer's own contrast pivot, which would be circular",
+    "edge_smoothing_cells": 1.0,
+    "edge_rationale": "one resolution cell — the oil boundary is sharp, so what is modelled is the imaging and multilooking response, not the oil",
+    "speckle_distribution": "Gamma on intensity (multi-look SAR intensity)",
+    "equivalent_number_of_looks": 110.0,
+    "speckle_rationale": "IW GRDH ~4.4 looks at 10 m, resampled to 50 m averages 25 pixels",
+    "background_source": "sampled from the drift run's own wind field, so the image and the physics cannot disagree about the sea state",
+    "wind_law": "Sigma0_VV ~ U^1.2 pinned at -10.0 dB for 7.0 m/s at 35.0° — a first-order power law, NOT CMOD",
+    "range_trend_db_per_km": -0.024,
+    "range_trend_rationale": "~6 dB across the 250 km IW swath; this is why contrast is measured against a local annulus, not a scene-wide mean",
+    "background_mean_db_before_speckle": -10.199,
+    "seed": 20260314,
+    "shape_px": [
+      2048,
+      2048
+    ],
+    "pixel_spacing_m": 50.0,
+    "incidence_angle_deg": 35.0
+  },
+  "provenance": {
+    "incidence_angle_deg": "authored product geometry, not a measured one",
+    "pixel_spacing_m": "authored product geometry, not a measured one",
+    "raster_path": "measured from the SC-01 synthetic Sigma0 raster — §0 Tier 4 scenario imagery, not real SAR; no detection metric may be quoted from it (§16)"
   }
 }

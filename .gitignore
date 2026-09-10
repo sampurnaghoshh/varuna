@@ -24,6 +24,10 @@ data/models/*
 *.7z
 *.tif
 *.tiff
+# ... except SC-01's synthetic Sigma0 raster, which IS committed. The offline
+# demo (§2.1) has to replay from a clone, and scene.raster_path pointing at a
+# file that is not there is its own quiet lie (§2.2). ~6 MB, int16, deterministic.
+!data/fixtures/**/*.tif
 *.nc
 *.pt
 *.pth

@@ -2,24 +2,40 @@
   "generator": {
     "script": "scripts/build_fixtures.py",
     "version": 1,
-    "generated_at": "2026-09-10T12:22:51.930382+00:00",
+    "generated_at": "2026-09-10T20:48:38.566679+00:00",
     "git_commit": null
   },
   "provisional": true,
   "frozen": false,
   "why_provisional": "§15 specifies fixtures from real engine runs on the real Part III scenes. Zenodo Part III was unavailable at build time and data/scenes and data/ais are empty, so the drift physics and the LR fusion are real but the slick geometry and the whole AIS frame are authored. This set is not the §9-frozen one: regenerate and freeze when Tier 1 or Tier 2 data lands.",
-  "data_tier": "none — no SAR raster in this build; §0 Tier 4 was NOT invoked",
+  "data_tier": "§0 Tier 4 ELECTED for SC-01's raster only — synthetic Sigma0 pixels, rendered from the authored slick polygon by scripts/synth_sar.py. An explicit human decision, not a fallback: no code path degrades into it, and SC-02 and SC-03 carry no raster at all. Scenario imagery for the demo — NOT evidence that detection works on real SAR, and no detection metric may be quoted from it (§16).",
+  "tier_4": {
+    "elected": true,
+    "scope": "SC-01 raster only",
+    "badge": "SYNTHETIC — NOT SAR IMAGERY",
+    "generator": "scripts/synth_sar.py",
+    "method_note": "Dark-region geometry is the slick polygon itself; damping is the midpoint of the 3–10 dB range CLAUDE.md states for mineral oil; edge sharpness is one resolution cell; speckle is Gamma at an ENL derived from the IW GRDH product chain; background is the drift run's own wind field. A method, not a set of knobs.",
+    "no_metric_from_it": "§16 — this raster establishes nothing about detection accuracy. It exists so the two §5.2 pixel terms resolve."
+  },
+  "land_guard": {
+    "module": "scripts/land_guard.py",
+    "mask": "data/geo/baltic_land_mask.geojson",
+    "particle_tolerance": 0.05,
+    "note": "Slick vertices, release point and every drift snapshot are checked against a real land polygon before anything is written. SC-01 was previously emitted onto Bornholm with ~90% of its particles ashore; the guard raises rather than warns, so it cannot happen quietly."
+  },
   "badges": [
     "SIMULATED SLICK — NO SAR IMAGERY IN THIS BUILD",
-    "INJECTED — SIMULATED"
+    "INJECTED — SIMULATED",
+    "SYNTHETIC — NOT SAR IMAGERY"
   ],
   "pending": [
     "Real SAR scenes (Zenodo Part III holdout 146–150, or §0 Tier 2 fallback)",
     "Real Danish AIS background traffic — every track here is injected",
     "Segmentation: the slick polygons are authored, not detected",
     "A trained LightGBM discriminator: p_oil and class here come from the rule-based §5.2 physics scorer, labelled method=rule_based",
+    "Real SAR pixels. SC-01's raster is synthetic (§0 Tier 4, elected) and SC-02/SC-03 have none, so no detection metric is quotable anywhere in this set (§16)",
     "SHAP factors: the factor breakdown is rule-based, basis=rule_based, not SHAP over a trained model",
-    "Radiometric and texture features: no pixels to measure",
+    "Radiometric and texture features on SC-02: no pixels to measure there",
     "distance_to_coast_km: no coastline dataset bundled"
   ],
   "engine": {
@@ -32,12 +48,23 @@
       "code": "SC-01",
       "name": "Baltic Night Discharge",
       "verdict": "MODERATE",
+      "attribution_issued": true,
+      "attribution_blocked_by": null,
+      "p_oil": 0.8947,
+      "detection_class": "oil",
       "culprit_mmsi": 220517000,
-      "lr": 73.21,
+      "lr": 72.93,
       "n_vessels_in_frame": 23,
       "n_ranked": 11,
-      "origin_error_km": 0.17,
+      "origin_error_km": 0.215,
       "t_star_error_min": -30.0,
+      "slick_clearance_km": 53.067,
+      "raster": "sigma0_vv_db.tif",
+      "raster_bytes": 5549266,
+      "raster_badge": "SYNTHETIC — NOT SAR IMAGERY",
+      "unavailable": {
+        "attribution_blocked_by": "the gate passed; there is nothing withheld and no refusal to state"
+      },
       "artefacts": [
         "ais",
         "attribution",
@@ -57,9 +84,13 @@
       "name": "The Look-alike Trap",
       "verdict": "UNATTRIBUTED",
       "attribution_issued": false,
+      "attribution_blocked_by": "wind_gate",
       "wind_gate_violated": true,
+      "p_oil": 0.0273,
+      "detection_class": "look-alike",
       "n_detections": 1,
       "n_vessels_in_frame": 12,
+      "formation_clearance_km": 13.256,
       "artefacts": [
         "ais",
         "detection",

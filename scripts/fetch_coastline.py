@@ -1,19 +1,53 @@
-"""Fetch and clip a Baltic land polygon for the offline console basemap.
+"""Fetch Natural Earth land and write the two Baltic land files the repo needs.
 
-The demo runs with no internet (§2.1), so MapLibre gets no tile server and the
-map would otherwise have no land at all. This bakes a coarse coastline into the
-repo instead: Natural Earth 1:10m land, clipped to the Baltic AOI.
+One download, two outputs, because two different jobs want land in two
+incompatible shapes:
 
-Human-invoked, once. Writes data/geo/baltic_land.geojson. Nothing under §9's
-read-only paths is touched — data/geo/ is a new directory.
+  data/geo/baltic_land.geojson       BASEMAP. Cartographic context for the
+                                     offline console (§2.1) - MapLibre gets no
+                                     tile server, so the map would otherwise
+                                     have no land at all. Landmasses crossing
+                                     the AOI edge are emitted as STROKED LINES,
+                                     never as polygons, because a hand-rolled
+                                     polygon clip bridges a concave coastline
+                                     straight across open sea and fills it as
+                                     land. A stroke has no fill to get wrong.
+
+  data/geo/baltic_land_mask.geojson  LAND MASK. The authoritative "is this point
+                                     on land" answer, used by
+                                     scripts/land_guard.py. Real closed
+                                     polygons, clipped by shapely, which does a
+                                     correct polygon intersection and needs no
+                                     bridging.
+
+The basemap CANNOT serve as the mask, and the distinction is not cosmetic. In
+the basemap only islands wholly inside the AOI survive as fills - eleven small
+ones. Poland, Germany, Sweden and mainland Denmark all cross the AOI edge and
+are therefore LineStrings. A point-in-polygon test against the basemap would
+report a slick sitting on the Polish coast as open water, which is precisely the
+failure the guard exists to catch.
+
+The mask AOI is deliberately wider than the basemap's. A guard whose mask ends
+before the drift does would read "off the edge of the mask" as "not on land", so
+land_guard.py refuses geometry that leaves the declared AOI rather than assuming
+the sea continues.
+
+Human-invoked. Needs network and shapely, so run it in the backend container:
+
+    docker compose exec -T backend python scripts/fetch_coastline.py
+
+Nothing under §9's read-only paths is touched - data/geo/ is neither
+data/scenes/ nor data/ais/.
 """
 
 from __future__ import annotations
 
 import json
+import os
 import urllib.request
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
+from typing import Any
 
 SOURCE_URL = (
     "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/"
@@ -25,8 +59,31 @@ SOURCE_URL = (
 LON_MIN, LON_MAX = 13.5, 17.5
 LAT_MIN, LAT_MAX = 54.0, 56.5
 
+# Mask AOI — wider still. The guard checks 12 h particle clouds, which travel
+# tens of kilometres from the scene, and a mask that stopped at the basemap edge
+# would silently score anything beyond it as water.
+MASK_LON_MIN, MASK_LON_MAX = 13.0, 18.0
+MASK_LAT_MIN, MASK_LAT_MAX = 53.5, 57.0
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
-OUT_PATH = REPO_ROOT / "data" / "geo" / "baltic_land.geojson"
+
+
+def _geo_dir() -> Path:
+    """Where the two files land, on the host and in the container alike.
+
+    In the container only ./backend and ./scripts are mounted, so walking up
+    from __file__ lands in /app and writes into the backend bind mount - the
+    files appear under backend/data/geo/ and the repo's real data/geo/ stays
+    stale, with nothing to say it happened. VARUNA_GEO_DIR is the container's
+    answer (compose sets it to the mounted /data/geo); the repo-root path is the
+    host's.
+    """
+    override = os.environ.get("VARUNA_GEO_DIR")
+    return Path(override) if override else REPO_ROOT / "data" / "geo"
+
+
+OUT_NAME = "baltic_land.geojson"
+MASK_NAME = "baltic_land_mask.geojson"
 
 Ring = list[list[float]]
 
@@ -125,6 +182,59 @@ def _round(ring: Ring) -> Ring:
     return [[round(p[0], 5), round(p[1], 5)] for p in ring]
 
 
+def build_land_mask(source: dict[str, Any]) -> dict[str, Any]:
+    """A true polygon land mask over the mask AOI, for scripts/land_guard.py.
+
+    shapely's intersection is a real polygon clip, so unlike the basemap path
+    above this can keep closed rings without bridging a coastline across open
+    sea. `buffer(0)` repairs the handful of self-intersecting rings Natural
+    Earth ships; without it unary_union raises on them.
+
+    The AOI travels inside the file. The guard reads it back and refuses any
+    geometry that leaves it, so "outside the mask" can never be mistaken for
+    "not on land".
+    """
+    from shapely.geometry import box, mapping, shape
+    from shapely.ops import unary_union
+
+    aoi = box(MASK_LON_MIN, MASK_LAT_MIN, MASK_LON_MAX, MASK_LAT_MAX)
+    parts = []
+    for feature in source["features"]:
+        geometry = feature.get("geometry") or {}
+        if geometry.get("type") not in ("Polygon", "MultiPolygon"):
+            continue
+        land = shape(geometry)
+        if not land.is_valid:
+            land = land.buffer(0)
+        if land.intersects(aoi):
+            parts.append(land.intersection(aoi))
+
+    merged = unary_union(parts)
+    return {
+        "type": "Feature",
+        "properties": {
+            "source": "Natural Earth 1:10m land (public domain)",
+            "source_url": SOURCE_URL,
+            "aoi": {
+                "lon": [MASK_LON_MIN, MASK_LON_MAX],
+                "lat": [MASK_LAT_MIN, MASK_LAT_MAX],
+            },
+            "note": (
+                "Authoritative land mask for scripts/land_guard.py. Closed "
+                "polygons from a shapely intersection, not the stroked basemap "
+                "in baltic_land.geojson - that one drops every landmass "
+                "crossing the AOI edge to a LineString and cannot answer a "
+                "point-in-polygon question."
+            ),
+            "aoi_note": (
+                "Geometry outside this AOI is not water; it is unknown. The "
+                "guard raises rather than assuming."
+            ),
+        },
+        "geometry": mapping(merged),
+    }
+
+
 def main() -> None:
     print(f"Downloading {SOURCE_URL} ...")
     with urllib.request.urlopen(SOURCE_URL, timeout=180) as response:
@@ -195,11 +305,21 @@ def main() -> None:
         "features": features,
     }
 
-    OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
-    OUT_PATH.write_text(json.dumps(out, separators=(",", ":")), encoding="utf-8")
-    size_kb = OUT_PATH.stat().st_size / 1024
-    print(f"Wrote {OUT_PATH}")
+    geo_dir = _geo_dir()
+    geo_dir.mkdir(parents=True, exist_ok=True)
+
+    out_path = geo_dir / OUT_NAME
+    out_path.write_text(json.dumps(out, separators=(",", ":")), encoding="utf-8")
+    size_kb = out_path.stat().st_size / 1024
+    print(f"Wrote {out_path}")
     print(f"  {n_filled} filled islands, {n_stroked} coastline lines, {size_kb:.1f} KB")
+
+    mask_path = geo_dir / MASK_NAME
+    mask = build_land_mask(source)
+    mask_path.write_text(json.dumps(mask, separators=(",", ":")), encoding="utf-8")
+    mask_kb = mask_path.stat().st_size / 1024
+    print(f"Wrote {mask_path}")
+    print(f"  land mask over {mask['properties']['aoi']}, {mask_kb:.1f} KB")
 
 
 if __name__ == "__main__":
