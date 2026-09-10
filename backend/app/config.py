@@ -88,12 +88,21 @@ class Settings(BaseSettings):
     # ------------------------------------------ §5.3 attribution channels ----
 
     e1_corridor_sigma_m: float = Field(default=500.0, gt=0.0)
+    # The corridor kernel is evaluated on a window of this many sigma around the
+    # vessel rather than over the whole raster. At 4 sigma the truncated tail
+    # carries under 0.01% of the kernel, and the saving is what keeps a frame of
+    # several hundred vessels inside the §7 live-stage budget.
+    e1_corridor_truncation_sigma: float = Field(default=4.0, gt=0.0)
     e2_sigma_theta_deg: float = Field(default=25.0, gt=0.0)
     e3_tau_median_min: float = Field(default=90.0, gt=0.0)
     e3_tau_sigma: float = Field(default=0.9, gt=0.0)
     e4_gap_coefficient: float = 0.4
     e4_gap_reference_min: float = 30.0
     e4_gap_cap: float = 3.0
+    # E4 looks for gaps overlapping [t* - h, t* + h]. A discharge is not
+    # instantaneous and t* is itself an estimate, so the window is wider than the
+    # snapshot interval it is derived from.
+    e4_window_half_h: float = Field(default=1.0, gt=0.0)
 
     # ------------------------------------------------------ §5.4 fusion ----
 

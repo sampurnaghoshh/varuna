@@ -428,7 +428,9 @@ All scenes come from **Zenodo Part III** (record `13761290`, `02_Test_images_and
 
 Under **§0 Data Contingency Tier 2** the scenes come from Deep-SAR SOS instead, every one of them badged `GEOREFERENCE ASSIGNED — PIXELS ARE REAL SAR`, and the holdout is reconstituted against that dataset's own structure. The detection-truth claim above depends on the fallback shipping masks, which is **UNVERIFIED** — see §0.
 
-**SC-01 · "Baltic Night Discharge"** — 110 s. Scene from **`oil/146–150`**, real Danish AIS traffic, one injected culprit track (badged `INJECTED — SIMULATED`). Full pipeline → particle rewind → culprit ignites at ~T−6h20m → `STRONG`, LR ≈ 4000+.
+**SC-01 · "Baltic Night Discharge"** — 110 s. Scene from **`oil/146–150`**, real Danish AIS traffic, one injected culprit track (badged `INJECTED — SIMULATED`). Full pipeline → particle rewind → culprit ignites at ~T−6h20m → `STRONG`, **LR > 100**.
+
+> The verdict band is the claim; the LR magnitude is not. The E1 term is `log(N · s1_j)` — a ratio against what an average vessel *in that frame* scores — so the achievable LR scales with `log N` and moves with traffic density. A busy Danish AIS frame yields a far larger number than a quiet one for the identical physics. **We quote whatever the run actually produces, with its frame size, and we never tune §5.4's weights to hit a target figure.** A number reverse-engineered from a slide is the thing §2.2 exists to prevent.
 
 **SC-02 · "The Look-alike Trap"** — **P0-CRITICAL** — 45 s. Scene from **`look-alike/146–150`**, wind 2.1 m/s. Returns `LOOK-ALIKE`, P(oil) ≈ 0.12, wind gate violated, **no attribution issued**. This scenario is as important as SC-01 — it proves the system refuses to accuse. It ships, or the demo does not run.
 
