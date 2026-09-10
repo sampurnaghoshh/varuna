@@ -252,9 +252,20 @@ Clamp to 1.0 when the seed cloud is degenerate.
 
 **E4 — dark-gap coincidence**
 ```
-g_j  = longest AIS gap (minutes) overlapping [t*_j − 1h, t*_j + 1h]
-s4_j = 1 + 0.4 · min(g_j / 30, 3)     # boost only, max 2.2×; never penalise clean transmitters
+g_j     = longest AIS gap (minutes) overlapping [t*_j − 1h, t*_j + 1h]
+g_eff_j = max(0, g_j − nominal_cadence)          # nominal_cadence = 15 min default
+s4_j    = 1 + 0.4 · min(g_eff_j / 30, 3)  # boost only, max 2.2×; never penalise clean transmitters
 ```
+
+**The cadence floor is a property of AIS, not a tuning parameter.** A class A
+transponder underway reports every few seconds, but the feeds this system consumes are
+decimated to a fixed interval — so the longest interval between consecutive samples of a
+*perfectly behaved* vessel equals that interval, not zero. Without the subtraction every
+vessel in the frame collects a boost for its own reporting cadence. E4 is the one channel
+that is **not** background-normalised (§5.4), so that boost does not cancel out: it
+inflates every log LR by the same amount and can carry a marginal candidate across
+ln(10). Those bands are a safety property (§9) and a data-feed setting may not move them.
+**E4 detects going dark. It does not detect transmitting.**
 
 E2 and E3 must not touch the current field. That independence is the entire reason the system survives a coarse ocean model, and it is our answer to the sharpest judge question. Do not refactor it away.
 

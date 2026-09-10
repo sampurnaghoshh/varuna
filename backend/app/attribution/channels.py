@@ -12,7 +12,8 @@ sharpest question a judge can ask. Do not refactor it away (§5.3).
     E3  kinematic consistency         L_released = major_axis_km / stretch_factor
                                       tau_j = L_released / SOG_j
                                       s3_j = lognormal(tau; median 90 min, sigma 0.9)
-    E4  dark-gap coincidence          s4_j = 1 + 0.4 * min(g_j / 30, 3)
+    E4  dark-gap coincidence          g_eff = max(0, g_j - nominal AIS cadence)
+                                      s4_j = 1 + 0.4 * min(g_eff / 30, 3)
                                       boost only, max 2.2x, never a penalty
 
 This module imports nothing from `app.drift`, `app.db` or `app.ais`. The origin
@@ -367,20 +368,42 @@ def e4_dark_gap(
     coefficient: float | None = None,
     reference_min: float | None = None,
     cap: float | None = None,
+    nominal_cadence_min: float | None = None,
 ) -> float:
-    """s4 = 1 + 0.4 * min(g / 30, 3) — a boost, never a penalty (§5.3).
+    """s4 = 1 + 0.4 * min(g_effective / 30, 3) — a boost, never a penalty (§5.3).
 
     A vessel that went dark around t* is more interesting, but a vessel that
     transmitted cleanly throughout is not thereby innocent-by-evidence: the floor
     at 1.0 means a clean transmitter is never pushed down the ranking for it.
+
+    The measured gap is reduced by the nominal AIS cadence first:
+
+        g_effective = max(0, g - nominal_cadence_min)
+
+    That subtraction is a property of AIS reporting intervals, not a tuning
+    parameter. A class A transponder underway reports every few seconds, but the
+    feeds this system consumes are decimated to a fixed interval, so the longest
+    interval between consecutive samples of a perfectly behaved vessel equals
+    that interval rather than zero. Without the floor every vessel in the frame
+    collects a boost for its own reporting cadence. E4 is not background-
+    normalised (§5.4), so that boost does not cancel: it inflates every log LR by
+    the same amount and can carry a marginal candidate across ln(10), which is a
+    §9 threshold and not something a data-feed setting may move. E4 detects going
+    dark, not transmitting.
     """
     coefficient = settings.e4_gap_coefficient if coefficient is None else coefficient
     reference_min = settings.e4_gap_reference_min if reference_min is None else reference_min
     cap = settings.e4_gap_cap if cap is None else cap
+    nominal_cadence_min = (
+        settings.e4_nominal_cadence_min if nominal_cadence_min is None else nominal_cadence_min
+    )
 
-    if not math.isfinite(gap_minutes) or gap_minutes <= 0.0:
+    if not math.isfinite(gap_minutes):
         return 1.0
-    return float(1.0 + coefficient * min(gap_minutes / reference_min, cap))
+    effective_min = max(gap_minutes - nominal_cadence_min, 0.0)
+    if effective_min <= 0.0:
+        return 1.0
+    return float(1.0 + coefficient * min(effective_min / reference_min, cap))
 
 
 def snapshot_times(t0: datetime, density: RunDensityLike) -> list[datetime]:

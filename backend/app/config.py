@@ -99,6 +99,14 @@ class Settings(BaseSettings):
     e4_gap_coefficient: float = 0.4
     e4_gap_reference_min: float = 30.0
     e4_gap_cap: float = 3.0
+    # Subtracted from a measured gap before E4 scores it. This is a property of
+    # how AIS reports, not a tuning parameter: a class A transponder underway
+    # reports every few seconds, and a feed decimated to a fixed interval makes
+    # normal transmission look like a gap. Without the floor every vessel in the
+    # frame collects a boost for its own reporting cadence, which inflates every
+    # LR uniformly and can carry a marginal candidate across ln(10). E4 detects
+    # going dark; it does not detect transmitting.
+    e4_nominal_cadence_min: float = Field(default=15.0, ge=0.0)
     # E4 looks for gaps overlapping [t* - h, t* + h]. A discharge is not
     # instantaneous and t* is itself an estimate, so the window is wider than the
     # snapshot interval it is derived from.

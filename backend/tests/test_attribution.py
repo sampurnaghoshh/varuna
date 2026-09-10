@@ -418,14 +418,44 @@ def test_e4_never_penalises_a_clean_transmitter() -> None:
 
 
 def test_e4_is_a_bounded_boost() -> None:
-    assert C.e4_dark_gap(30.0) == pytest.approx(1.4)
-    assert C.e4_dark_gap(90.0) == pytest.approx(2.2)
+    """Scored on the gap beyond nominal cadence: 15 min of the measured gap."""
+    assert C.e4_dark_gap(45.0) == pytest.approx(1.4)
+    assert C.e4_dark_gap(105.0) == pytest.approx(2.2)
     assert C.e4_dark_gap(600.0) == pytest.approx(2.2)
 
 
 def test_e4_is_monotonic_in_gap_length() -> None:
     values = [C.e4_dark_gap(g) for g in (0.0, 10.0, 30.0, 60.0, 90.0, 200.0)]
     assert values == sorted(values)
+
+
+def test_e4_ignores_nominal_ais_reporting_cadence() -> None:
+    """A vessel reporting on normal cadence scores exactly 1.0.
+
+    E4 detects going dark, not transmitting. Without the floor every vessel in
+    a frame collects a boost for its own feed's sampling interval, and because
+    E4 is not background-normalised (§5.4) that boost does not cancel - it
+    inflates every log LR uniformly and can carry a marginal candidate across
+    ln(10), which §9 does not allow a data-feed setting to do.
+    """
+    from app.config import settings
+
+    times = [T0 + timedelta(minutes=10 * i) for i in range(20)]
+    track = C.VesselTrack(
+        mmsi=1,
+        times=times,
+        positions_m=np.zeros((len(times), 2)),
+        sog_kn=np.full(len(times), 10.0),
+        cog_deg=np.full(len(times), 45.0),
+    )
+    gap_min = track.longest_gap_min(times[0], times[-1])
+    assert gap_min == 10.0
+    assert gap_min < settings.e4_nominal_cadence_min
+    assert C.e4_dark_gap(gap_min) == 1.0
+
+    # And a real silence on top of that cadence still scores.
+    assert C.e4_dark_gap(settings.e4_nominal_cadence_min) == 1.0
+    assert C.e4_dark_gap(settings.e4_nominal_cadence_min + 30.0) == pytest.approx(1.4)
 
 
 # ------------------------------------------------------------------ priors ----
