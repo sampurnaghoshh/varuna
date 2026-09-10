@@ -2,7 +2,7 @@
   "generator": {
     "script": "scripts/build_fixtures.py",
     "version": 1,
-    "generated_at": "2026-09-10T11:49:34.233515+00:00",
+    "generated_at": "2026-09-10T12:22:51.930382+00:00",
     "git_commit": null
   },
   "provisional": true,
@@ -17,8 +17,8 @@
     "Real SAR scenes (Zenodo Part III holdout 146–150, or §0 Tier 2 fallback)",
     "Real Danish AIS background traffic — every track here is injected",
     "Segmentation: the slick polygons are authored, not detected",
-    "p_oil / class: the LightGBM discriminator is not trained in this build",
-    "SHAP factors: no discriminator, so no attributions to explain",
+    "A trained LightGBM discriminator: p_oil and class here come from the rule-based §5.2 physics scorer, labelled method=rule_based",
+    "SHAP factors: the factor breakdown is rule-based, basis=rule_based, not SHAP over a trained model",
     "Radiometric and texture features: no pixels to measure",
     "distance_to_coast_km: no coastline dataset bundled"
   ],

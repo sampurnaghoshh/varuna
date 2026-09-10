@@ -38,9 +38,55 @@
           3.0,
           12.0
         ],
-        "p_oil": null,
+        "p_oil": 0.0273,
+        "p_class": "look-alike",
+        "method": "rule_based",
+        "note": "No trained discriminator is present in this build, so P(oil) comes from a deterministic rule-based scorer over the §5.2 physics — the wind gate, shape complexity, eccentricity and slick area — not from a trained model. It carries no validation metric, no split and no n, because there is no model to have validated.",
+        "factors": [
+          {
+            "feature": "wind_speed_ms",
+            "value": 2.1,
+            "contribution": -1.393939393939394,
+            "direction": "look-alike",
+            "rationale": "wind 2.1 m/s is below the 3.0 m/s gate: at that speed the sea surface itself mimics oil, so a dark formation is not trustworthy evidence of a slick",
+            "basis": "rule_based"
+          },
+          {
+            "feature": "eccentricity",
+            "value": 0.3428,
+            "contribution": -0.6244540174437121,
+            "direction": "look-alike",
+            "rationale": "a deliberate discharge while underway lays oil along the track, so it is elongated; a weather feature has no such axis",
+            "basis": "rule_based"
+          },
+          {
+            "feature": "shape_complexity",
+            "value": 1.7481,
+            "contribution": -0.3873306561865194,
+            "direction": "look-alike",
+            "rationale": "real slicks are sheared by the drift that moved them and read as filamentary; low-wind cells and biogenic films stay broad and rounded",
+            "basis": "rule_based"
+          },
+          {
+            "feature": "area_km2",
+            "value": 29.9892,
+            "contribution": -0.06806974948284836,
+            "direction": "look-alike",
+            "rationale": "scored as a band, not a direction: below it a formation is speckle, above it the footprint belongs to weather — a wind shadow spans hundreds of km², a discharge does not",
+            "basis": "rule_based"
+          }
+        ],
         "unavailable": {
-          "p_oil": "LightGBM oil/look-alike discriminator is not trained in this build"
+          "mean_sigma0_db": "no SAR raster in this build; radiometric and texture features need pixels",
+          "std_sigma0_db": "no SAR raster in this build; radiometric and texture features need pixels",
+          "contrast_db": "no SAR raster in this build; radiometric and texture features need pixels",
+          "edge_gradient_mean": "no SAR raster in this build; radiometric and texture features need pixels",
+          "edge_gradient_std": "no SAR raster in this build; radiometric and texture features need pixels",
+          "glcm_homogeneity": "no SAR raster in this build; radiometric and texture features need pixels",
+          "glcm_contrast": "no SAR raster in this build; radiometric and texture features need pixels",
+          "glcm_entropy": "no SAR raster in this build; radiometric and texture features need pixels",
+          "distance_to_coast_km": "no coastline dataset bundled in this build",
+          "model_version": "no trained model ran; a rule-based score has no model version"
         }
       }
     },
@@ -52,7 +98,7 @@
       "payload": {
         "verdict": "UNATTRIBUTED",
         "attribution_issued": false,
-        "reason": "wind gate violated (2.1 m/s < 3.0 m/s): below 3.0 m/s the sea surface itself mimics oil, so the dark formation is not trustworthy evidence of a slick (§5.2). No P(oil) is reported either — the discriminator is not available in this build, and a number invented for it would be exactly what §2.2 forbids.",
+        "reason": "wind gate violated (2.1 m/s < 3.0 m/s): below 3.0 m/s the sea surface itself mimics oil, so the dark formation is not trustworthy evidence of a slick (§5.2). It classifies look-alike at P(oil) 0.03 — a rule-based score over the §5.2 physics, not a trained-model output — and the gate alone would withhold attribution regardless of what that number said.",
         "n_vessels_in_frame": 12
       }
     }

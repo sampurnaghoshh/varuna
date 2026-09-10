@@ -443,7 +443,13 @@ Under **§0 Data Contingency Tier 2** the scenes come from Deep-SAR SOS instead,
 
 > The verdict band is the claim; the LR magnitude is not. The E1 term is `log(N · s1_j)` — a ratio against what an average vessel *in that frame* scores — so the achievable LR scales with `log N` and moves with traffic density. A busy Danish AIS frame yields a far larger number than a quiet one for the identical physics. **We quote whatever the run actually produces, with its frame size, and we never tune §5.4's weights to hit a target figure.** A number reverse-engineered from a slide is the thing §2.2 exists to prevent.
 
-**SC-02 · "The Look-alike Trap"** — **P0-CRITICAL** — 45 s. Scene from **`look-alike/146–150`**, wind 2.1 m/s. Returns `LOOK-ALIKE`, P(oil) ≈ 0.12, wind gate violated, **no attribution issued**. This scenario is as important as SC-01 — it proves the system refuses to accuse. It ships, or the demo does not run.
+**SC-02 · "The Look-alike Trap"** — **P0-CRITICAL** — 45 s. Scene from **`look-alike/146–150`**, wind 2.1 m/s. Returns `LOOK-ALIKE`, **P(oil) 0.027**, wind gate violated, **no attribution issued**. This scenario is as important as SC-01 — it proves the system refuses to accuse. It ships, or the demo does not run.
+
+> **The P(oil) figure here is engine output, and this line follows it.** It previously read "P(oil) ≈ 0.12". That figure was **illustrative — authored to describe the scenario, never measured**, and no run ever produced it. The current 0.027 is what the discriminator actually returns for this scene, and if the discriminator changes, this line changes with it. We do not tune a scorer to reproduce a number written in a spec; that is the direction §2.2 exists to forbid.
+>
+> **It is a rule-based score, not a trained-model output.** No LightGBM discriminator is trained in this build — Zenodo Part III has not landed, so there is no training data. P(oil) comes from a deterministic scorer over the §5.2 physics: the wind gate, shape complexity, eccentricity and slick area, as additive log-odds with weights set from physics rationale alone. It carries **no split, no n and no validation metric** (§16), because there is no model to have validated. Everything that surfaces it — the API payload, the `detections.detector` column, every `detection_factors` row, and the UI — is labelled `rule_based` and carries a note saying so. A rule-based scorer is defensible; a rule-based scorer presented as a model is not.
+>
+> Two of the six rule terms — `edge_gradient_mean` and `contrast_db` — need pixels this build does not have, so the score is shrunk toward the base rate in proportion to the evidence actually observed (0.70 here). Less evidence means a weaker claim, in both directions.
 
 **SC-03 · "Clean Sea"** — 15 s. Scene from **`oil-free/146–150`**. Zero detections. Proves no false positives.
 

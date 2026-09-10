@@ -67,8 +67,16 @@ CREATE INDEX IF NOT EXISTS detections_geom_gist ON detections USING GIST (geom);
 CREATE INDEX IF NOT EXISTS detections_scene_idx ON detections (scene_id);
 
 -- ----------------------------------------------------- detection_factors ----
--- One row per feature per detection: the SHAP contribution behind the
--- explainability panel (§10 P0-3).
+-- One row per feature per detection: the contribution behind the explainability
+-- panel (§10 P0-3).
+--
+-- `shap` holds the contribution whichever way it was produced, and `basis` says
+-- which way that was. When no trained discriminator is available the fallback is
+-- a rule-based scorer over the §5.2 physics, and its contributions are additive
+-- log-odds in exactly the same units - identical in the column, and not the same
+-- claim. There is deliberately NO DEFAULT: defaulting to 'shap' would relabel
+-- every rule-based row as a model output, which is the precise confusion the
+-- column exists to prevent, so a writer has to state which it is.
 
 CREATE TABLE IF NOT EXISTS detection_factors (
     id                    bigserial PRIMARY KEY,
@@ -76,6 +84,7 @@ CREATE TABLE IF NOT EXISTS detection_factors (
     feature               text NOT NULL,
     value                 real,
     shap                  real,
+    basis                 text NOT NULL CHECK (basis IN ('shap', 'rule_based')),
     UNIQUE (detection_id, feature)
 );
 

@@ -301,17 +301,60 @@ def test_sc02_refuses_to_attribute(manifest: dict[str, Any]) -> None:
     assert not loader.has_fixture("SC-02", "drift")
 
 
-def test_sc02_reports_no_p_oil_it_did_not_compute() -> None:
-    """§12 wants LOOK-ALIKE at P(oil) 0.12. There is no discriminator in this
-    build, so the fixture reports neither and says why. Inventing the number is
-    precisely what §2.2 forbids."""
+def test_sc02_classifies_look_alike_without_claiming_a_model() -> None:
+    """§12's LOOK-ALIKE, from the rule-based §5.2 scorer, labelled as such.
+
+    There is still no trained discriminator in this build. What changed is that
+    the fallback is now a real deterministic scorer over the §5.2 physics rather
+    than a shrug — so there is a number, a class and a breakdown, and every one
+    of them is marked `rule_based`. The number is whatever the physics produced;
+    §12 was amended to match the engine rather than the weights tuned to match
+    §12 (§2.2).
+    """
     detection = loader.load("SC-02", "detection")
 
-    assert detection["p_oil"] is None
-    assert detection["class"] is None
-    assert detection["shap_factors"] == []
-    for field_name in ("p_oil", "class", "shap_factors"):
-        assert "discriminator" in detection["unavailable"][field_name]
+    assert detection["class"] == "look-alike"
+    assert 0.0 < detection["p_oil"] < settings.discriminator_oil_threshold
+    assert detection["shap_factors"], "a verdict with no breakdown is not explainable"
+
+    # The qualifier, in every place a reader could form an impression from.
+    assert detection["method"] == "rule_based"
+    assert detection["detector"] == "rule_based"
+    assert detection["factor_basis"] == "rule_based"
+    assert "not from a trained model" in detection["note"]
+    assert all(factor["basis"] == "rule_based" for factor in detection["shap_factors"])
+
+    # A rule-based run never claims a version, and says why it has none.
+    assert detection["model_version"] is None
+    assert "rule-based" in detection["unavailable"]["model_version"]
+
+    # The wind gate dominates, and it argues look-alike.
+    assert detection["shap_factors"][0]["feature"] == "wind_speed_ms"
+    assert detection["shap_factors"][0]["direction"] == "look-alike"
+
+
+def test_sc02_contributions_sum_to_the_probability_shown() -> None:
+    """The panel's bars must sum to the number above them, or it is decoration."""
+    detection = loader.load("SC-02", "detection")
+
+    base = detection["base_p_oil"]
+    total = math.log(base / (1.0 - base)) + sum(
+        factor["contribution"] for factor in detection["shap_factors"]
+    )
+    p_oil = 1.0 / (1.0 + math.exp(-total))
+    assert p_oil == pytest.approx(detection["p_oil"], abs=5e-5)
+
+
+def test_sc02_states_what_it_could_not_measure() -> None:
+    """Two of the six rule terms need pixels there are none of. Absent, with a
+    reason — never a zero, which would read as a measurement of no damping."""
+    detection = loader.load("SC-02", "detection")
+
+    for name in ("edge_gradient_mean", "contrast_db"):
+        assert detection["features"][name] is None
+        assert "pixels" in detection["unavailable"][name]
+    # Less evidence has to mean a weaker claim, and the fixture records how much.
+    assert 0.0 < detection["evidence_fraction"] < 1.0
 
 
 def test_sc03_finds_nothing(manifest: dict[str, Any]) -> None:

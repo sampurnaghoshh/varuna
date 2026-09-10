@@ -85,6 +85,94 @@ class Settings(BaseSettings):
     wind_gate_min_ms: float = 3.0
     wind_gate_max_ms: float = 12.0
 
+    # ------------------------------------- §5.2 CFAR dark-formation detector ----
+    # `detection/classical.py` is the always-works fallback (§9), so every knob it
+    # reads lives here rather than inline: a laptop that cannot load the U-Net
+    # still has to produce polygons, and tuning it must not require an edit.
+
+    # Oil damps capillary waves by roughly 3-10 dB against the surrounding sea.
+    # 2.0 dB sits below the weakest of that range: the discriminator, not the
+    # threshold, is what rejects the false alarms this admits.
+    cfar_offset_db: float = Field(default=2.0, gt=0.0)
+    # The background window must be wide enough that a slick occupies a small
+    # fraction of it - otherwise the slick raises its own local mean and hides.
+    cfar_window_px: int = Field(default=201, gt=2)
+    # A window whose local contrast is below the sensor noise floor carries no
+    # information, and thresholding it turns speckle into detections.
+    cfar_min_local_std_db: float = Field(default=0.3, ge=0.0)
+    cfar_open_px: int = Field(default=3, ge=0)
+    cfar_close_px: int = Field(default=5, ge=0)
+
+    # Below this a dark formation is speckle or a single-look artefact, not a
+    # slick worth drifting: the §5.1 solver seeds 5000 particles in the polygon.
+    detection_min_area_km2: float = Field(default=0.5, gt=0.0)
+    # Douglas-Peucker tolerance on the polygonised mask. One pixel of a 10 m GRD
+    # product - enough to drop the staircase, too small to move a boundary.
+    detection_simplify_m: float = Field(default=10.0, ge=0.0)
+
+    # ------------------------------- §5.2 oil / look-alike discriminator ----
+
+    discriminator_oil_threshold: float = Field(default=0.5, gt=0.0, lt=1.0)
+    discriminator_top_k_factors: int = Field(default=6, gt=0)
+
+    # --- rule-based fallback -------------------------------------------------
+    # Used only when no trained LightGBM model is on disk. Every weight below is
+    # a log-odds contribution set from its §5.2 physics rationale; none is fitted
+    # to data and none is tuned to reproduce a figure from the spec. A run scored
+    # this way reports method="rule_based" and never claims a model_version.
+
+    # Look-alikes outnumber true slicks among SAR dark formations, so the prior
+    # sits well below even odds. This is the score a formation carries before any
+    # feature is read, and what a partially-observed formation shrinks back
+    # towards.
+    rule_base_p_oil: float = Field(default=0.25, gt=0.0, lt=1.0)
+
+    # Wind gate - the §5.2 validity condition, and the single strongest term.
+    # Below the gate the sea surface itself mimics oil, so a dark formation there
+    # is far more likely to be the sea than a slick. Above it slicks disperse
+    # below detectability, which is a weaker argument: the formation is real, it
+    # is just unlikely to still be oil. In-band earns a small positive - the
+    # observation is at least being made under conditions where it means
+    # something. Applied as a step, not a ramp, because §5.2 defines the gate as
+    # a binary validity flag rather than a continuum.
+    rule_w_wind_gate_low: float = Field(default=2.0, ge=0.0)
+    rule_w_wind_gate_high: float = Field(default=1.0, ge=0.0)
+    rule_w_wind_in_band: float = Field(default=0.4, ge=0.0)
+
+    # Shape complexity P^2/4*pi*A - 1.0 for a circle. Real slicks are sheared by
+    # the drift that moved them and read as filamentary and convoluted;
+    # low-wind cells and biogenic films stay broad and rounded.
+    rule_w_shape_complexity: float = Field(default=1.2, ge=0.0)
+    rule_shape_complexity_pivot: float = Field(default=2.5, gt=0.0)
+    rule_shape_complexity_scale: float = Field(default=1.5, gt=0.0)
+
+    # Eccentricity. A deliberate discharge while underway lays oil ALONG the
+    # track, so it is elongated - the same physics E2 scores in §5.3. A weather
+    # or low-wind feature has no such axis.
+    rule_w_eccentricity: float = Field(default=0.9, ge=0.0)
+    rule_eccentricity_pivot: float = Field(default=0.80, gt=0.0)
+    rule_eccentricity_scale: float = Field(default=0.15, gt=0.0)
+
+    # Edge gradient, dB per pixel. Oil damps capillary waves sharply at its
+    # boundary; a low-wind cell fades into the surrounding sea.
+    rule_w_edge_gradient: float = Field(default=1.0, ge=0.0)
+    rule_edge_gradient_pivot_db: float = Field(default=0.8, gt=0.0)
+    rule_edge_gradient_scale_db: float = Field(default=0.4, gt=0.0)
+
+    # Damping contrast, dB below background, as a magnitude. Oil sits 3-10 dB
+    # down; a marginal look-alike manages 1-3 dB.
+    rule_w_contrast: float = Field(default=1.0, ge=0.0)
+    rule_contrast_pivot_db: float = Field(default=4.0, gt=0.0)
+    rule_contrast_scale_db: float = Field(default=2.0, gt=0.0)
+
+    # Area, scored on log10(km^2) as a band rather than a direction: below the
+    # band a formation is speckle, above it the footprint belongs to weather - a
+    # wind shadow spans hundreds of km^2, a discharge does not. Centre 5 km^2,
+    # half-width 1.3 decades, so the band runs roughly 0.25-100 km^2.
+    rule_w_area: float = Field(default=0.5, ge=0.0)
+    rule_area_log10_centre: float = Field(default=0.7)
+    rule_area_log10_half_width: float = Field(default=1.3, gt=0.0)
+
     # ------------------------------------------ §5.3 attribution channels ----
 
     e1_corridor_sigma_m: float = Field(default=500.0, gt=0.0)

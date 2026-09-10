@@ -70,6 +70,9 @@ from app.attribution import channels as channels_mod
 from app.attribution import fusion as fusion_mod
 from app.attribution import priors as priors_mod
 from app.config import settings
+from app.detection import discriminator as discriminator_mod
+from app.detection import explain as explain_mod
+from app.detection import features as features_mod
 from app.drift import density as density_mod
 from app.drift import fields as fields_mod
 from app.drift import solver as solver_mod
@@ -135,12 +138,12 @@ SEED_SC01 = 20260314
 SIMULATED_AIS_BADGE = "INJECTED — SIMULATED"
 AUTHORED_SCENE_BADGE = "SIMULATED SLICK — NO SAR IMAGERY IN THIS BUILD"
 
-NO_PIXELS = "no SAR raster in this build; radiometric and texture features need pixels"
-NO_COASTLINE = "no coastline dataset bundled in this build"
-NO_DISCRIMINATOR = "LightGBM oil/look-alike discriminator is not trained in this build"
-DERIVED_BY_GENERATOR = (
-    "derived by fixture generator from the slick hull — pending detection/features.extract"
-)
+# Owned by the modules that produce them, so a reason cannot drift between what
+# the engine says and what the fixture records.
+NO_PIXELS = features_mod.NO_PIXELS
+NO_COASTLINE = features_mod.NO_COASTLINE
+NO_MODEL_VERSION = discriminator_mod.NO_MODEL_VERSION
+AUTHORED_POLYGON = "the slick polygon is authored for this build; no segmenter ran (§15)"
 
 
 @dataclass(frozen=True)
@@ -294,34 +297,14 @@ def _perpendicular(cog_deg: float) -> np.ndarray:
 def _hull_geometry(polygon_utm: Polygon) -> dict[str, float]:
     """Geometry features of the observed slick, in a local UTM frame (§8).
 
-    Derived here rather than imported from detection/features.py, which is still
-    a stub: this session does not cross into that module (§11). The values carry
-    a provenance tag and are replaced by features.extract when it lands.
+    Thin rounding wrapper over `detection.features.geometry_features`, which is
+    the one implementation. Two copies of a feature definition means one of them
+    is wrong and nobody knows which — the same reason §0 keeps the data split in
+    exactly one place.
     """
-    rectangle = polygon_utm.minimum_rotated_rectangle
-    corners = np.asarray(rectangle.exterior.coords[:4])
-    edge_a = corners[1] - corners[0]
-    edge_b = corners[2] - corners[1]
-    length_a = float(np.hypot(*edge_a))
-    length_b = float(np.hypot(*edge_b))
-
-    major_edge, major_m, minor_m = (
-        (edge_a, length_a, length_b) if length_a >= length_b else (edge_b, length_b, length_a)
-    )
-    area_m2 = float(polygon_utm.area)
-    perimeter_m = float(polygon_utm.length)
-    axis_ratio = minor_m / major_m if major_m > 0.0 else 0.0
-
     return {
-        "area_km2": round(area_m2 / 1.0e6, 4),
-        "perimeter_km": round(perimeter_m / 1.0e3, 4),
-        "shape_complexity": round(perimeter_m**2 / (4.0 * math.pi * area_m2), 4)
-        if area_m2 > 0.0
-        else 0.0,
-        "major_axis_km": round(major_m / 1.0e3, 4),
-        "minor_axis_km": round(minor_m / 1.0e3, 4),
-        "eccentricity": round(math.sqrt(max(1.0 - axis_ratio**2, 0.0)), 4),
-        "orientation_deg": round(_bearing_deg(float(major_edge[0]), float(major_edge[1])), 2),
+        name: round(value, 2 if name == "orientation_deg" else 4)
+        for name, value in features_mod.geometry_features(polygon_utm).items()
     }
 
 
@@ -819,59 +802,59 @@ def _detection(
     wind_speed_ms: float,
     n_ships_within_20km: int | None,
 ) -> dict[str, Any]:
-    geometry = _hull_geometry(polygon_utm)
-    gate_violated = (
-        wind_speed_ms < settings.wind_gate_min_ms or wind_speed_ms > settings.wind_gate_max_ms
-    )
-    unavailable = {
-        "mean_sigma0_db": NO_PIXELS,
-        "std_sigma0_db": NO_PIXELS,
-        "contrast_db": NO_PIXELS,
-        "edge_gradient_mean": NO_PIXELS,
-        "edge_gradient_std": NO_PIXELS,
-        "glcm_homogeneity": NO_PIXELS,
-        "glcm_contrast": NO_PIXELS,
-        "glcm_entropy": NO_PIXELS,
-        "distance_to_coast_km": NO_COASTLINE,
-        "p_oil": NO_DISCRIMINATOR,
-        "class": NO_DISCRIMINATOR,
-        "shap_factors": NO_DISCRIMINATOR,
-        "model_version": "no model ran; the slick polygon is authored, not detected",
-    }
-    if n_ships_within_20km is None:
-        unavailable["n_ships_within_20km"] = "no AIS frame bundled with this scenario"
+    """One detection block: real features, a real classification, honest gaps.
 
-    features: dict[str, Any] = dict(geometry)
-    features.update(
-        {
-            "mean_sigma0_db": None,
-            "std_sigma0_db": None,
-            "contrast_db": None,
-            "edge_gradient_mean": None,
-            "edge_gradient_std": None,
-            "glcm_homogeneity": None,
-            "glcm_contrast": None,
-            "glcm_entropy": None,
-            "wind_speed_ms": wind_speed_ms,
-            "distance_to_coast_km": None,
-            "n_ships_within_20km": n_ships_within_20km,
-        }
+    The polygon is authored — no segmenter ran (§15) — but everything computed
+    FROM it is engine output. `features.extract` produces the §5.2 vector and
+    marks what it could not measure, and `discriminator.score` classifies it.
+    With no trained model on disk that classification comes from the rule-based
+    §5.2 physics scorer, and the block says so in `method` and `note` rather
+    than letting a reader assume a model ran.
+    """
+    geometry = _hull_geometry(polygon_utm)
+    extracted = features_mod.extract(
+        polygon_utm,
+        sigma0_db=None,
+        wind_speed_ms=wind_speed_ms,
+        vessel_positions_m=None,
     )
+    # The generator knows the AIS frame; features.extract does not receive it.
+    values = dict(extracted.values)
+    values.update(geometry)
+    unavailable = dict(extracted.unavailable)
+    if n_ships_within_20km is not None:
+        values["n_ships_within_20km"] = n_ships_within_20km
+        unavailable.pop("n_ships_within_20km", None)
+
+    extracted = features_mod.ExtractedFeatures(values=values, unavailable=unavailable)
+    result = discriminator_mod.score(extracted)
+    gate_violated, gate_reason = discriminator_mod.wind_gate(extracted)
+    payload = explain_mod.to_ui_payload(extracted, result)
 
     return {
         "id": detection_id,
         "scene_id": scene_id,
         "geom": _geojson(polygon_utm, frame),
-        "features": features,
-        "feature_provenance": {key: DERIVED_BY_GENERATOR for key in geometry},
-        "p_oil": None,
-        "class": None,
-        "shap_factors": [],
+        "features": {
+            name: (round(value, 4) if isinstance(value, float) else value)
+            for name, value in values.items()
+        },
+        "feature_provenance": {name: AUTHORED_POLYGON for name in geometry},
+        "p_oil": round(result.p_oil, 4) if result.p_oil is not None else None,
+        "class": result.p_class,
+        "method": result.method,
+        "note": result.note,
+        "shap_factors": payload["factors"],
+        "factor_basis": result.basis,
+        "base_p_oil": result.base_p_oil,
+        "evidence_fraction": round(result.evidence_fraction, 4),
         "wind_gate_violated": gate_violated,
+        "wind_gate_reason": gate_reason,
         "wind_gate_range_ms": [settings.wind_gate_min_ms, settings.wind_gate_max_ms],
         "model_version": None,
-        "detector": "authored",
-        "unavailable": unavailable,
+        "detector": result.method,
+        "unavailable": dict(result.unavailable),
+        "provenance": AUTHORED_POLYGON,
     }
 
 
@@ -1057,7 +1040,8 @@ def build_sc01(root: Path) -> dict[str, Any]:
     )
     detection["provenance"] = (
         "Alpha hull of a real 6 h forward drift run seeded on the authored release "
-        "corridor. The attribution engine sees only this polygon."
+        "corridor. The attribution engine sees only this polygon. Features and "
+        "classification are engine output; the polygon is not."
     )
 
     _write_json(directory / "scene.json", scene)
@@ -1214,11 +1198,16 @@ def _ws_sc01(
         _event(
             "DISCRIMINATING",
             0.28,
-            "Oil / look-alike discriminator is not available in this build — no P(oil) is reported",
+            f"Classified {detection['class']} — P(oil) {detection['p_oil']:.2f} "
+            f"(rule-based §5.2 physics; no trained model in this build)",
             16_000,
-            p_oil=None,
-            unavailable={"p_oil": detection["unavailable"]["p_oil"]},
+            p_oil=detection["p_oil"],
+            p_class=detection["class"],
+            method=detection["method"],
+            note=detection["note"],
+            factors=detection["shap_factors"],
             wind_gate_violated=detection["wind_gate_violated"],
+            unavailable=detection["unavailable"],
         ),
     ]
 
@@ -1349,14 +1338,18 @@ def build_sc02(root: Path) -> dict[str, Any]:
         SC02_WIND_MS,
         _count_ships_within(tracks, centre_m, 20_000.0),
     )
-    detection["provenance"] = "Authored low-wind dark formation; no segmenter ran (§15)."
+    detection["provenance"] = (
+        "Authored low-wind dark formation; no segmenter ran (§15). Features and "
+        "classification are engine output; the polygon is not."
+    )
 
     gate_reason = (
         f"wind gate violated ({SC02_WIND_MS} m/s < {settings.wind_gate_min_ms} m/s): below "
         f"{settings.wind_gate_min_ms} m/s the sea surface itself mimics oil, so the dark "
-        "formation is not trustworthy evidence of a slick (§5.2). No P(oil) is reported "
-        "either — the discriminator is not available in this build, and a number invented "
-        "for it would be exactly what §2.2 forbids."
+        f"formation is not trustworthy evidence of a slick (§5.2). It classifies "
+        f"{detection['class']} at P(oil) {detection['p_oil']:.2f} — a rule-based score "
+        "over the §5.2 physics, not a trained-model output — and the gate alone would "
+        "withhold attribution regardless of what that number said."
     )
     attribution_refusal = {
         "issued": False,
@@ -1402,8 +1395,12 @@ def build_sc02(root: Path) -> dict[str, Any]:
             wind_gate_violated=True,
             wind_speed_ms=SC02_WIND_MS,
             wind_gate_range_ms=[settings.wind_gate_min_ms, settings.wind_gate_max_ms],
-            p_oil=None,
-            unavailable={"p_oil": NO_DISCRIMINATOR},
+            p_oil=detection["p_oil"],
+            p_class=detection["class"],
+            method=detection["method"],
+            note=detection["note"],
+            factors=detection["shap_factors"],
+            unavailable=detection["unavailable"],
         ),
         _event(
             "DONE",
@@ -1544,8 +1541,10 @@ def main() -> int:
                 "Real SAR scenes (Zenodo Part III holdout 146–150, or §0 Tier 2 fallback)",
                 "Real Danish AIS background traffic — every track here is injected",
                 "Segmentation: the slick polygons are authored, not detected",
-                "p_oil / class: the LightGBM discriminator is not trained in this build",
-                "SHAP factors: no discriminator, so no attributions to explain",
+                "A trained LightGBM discriminator: p_oil and class here come from the "
+                "rule-based §5.2 physics scorer, labelled method=rule_based",
+                "SHAP factors: the factor breakdown is rule-based, basis=rule_based, "
+                "not SHAP over a trained model",
                 "Radiometric and texture features: no pixels to measure",
                 "distance_to_coast_km: no coastline dataset bundled",
             ],

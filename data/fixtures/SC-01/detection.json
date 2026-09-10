@@ -493,24 +493,63 @@
     "n_ships_within_20km": 14
   },
   "feature_provenance": {
-    "area_km2": "derived by fixture generator from the slick hull — pending detection/features.extract",
-    "perimeter_km": "derived by fixture generator from the slick hull — pending detection/features.extract",
-    "shape_complexity": "derived by fixture generator from the slick hull — pending detection/features.extract",
-    "major_axis_km": "derived by fixture generator from the slick hull — pending detection/features.extract",
-    "minor_axis_km": "derived by fixture generator from the slick hull — pending detection/features.extract",
-    "eccentricity": "derived by fixture generator from the slick hull — pending detection/features.extract",
-    "orientation_deg": "derived by fixture generator from the slick hull — pending detection/features.extract"
+    "area_km2": "the slick polygon is authored for this build; no segmenter ran (§15)",
+    "perimeter_km": "the slick polygon is authored for this build; no segmenter ran (§15)",
+    "shape_complexity": "the slick polygon is authored for this build; no segmenter ran (§15)",
+    "major_axis_km": "the slick polygon is authored for this build; no segmenter ran (§15)",
+    "minor_axis_km": "the slick polygon is authored for this build; no segmenter ran (§15)",
+    "eccentricity": "the slick polygon is authored for this build; no segmenter ran (§15)",
+    "orientation_deg": "the slick polygon is authored for this build; no segmenter ran (§15)"
   },
-  "p_oil": null,
-  "class": null,
-  "shap_factors": [],
+  "p_oil": 0.4814,
+  "class": "look-alike",
+  "method": "rule_based",
+  "note": "No trained discriminator is present in this build, so P(oil) comes from a deterministic rule-based scorer over the §5.2 physics — the wind gate, shape complexity, eccentricity and slick area — not from a trained model. It carries no validation metric, no split and no n, because there is no model to have validated.",
+  "shap_factors": [
+    {
+      "feature": "eccentricity",
+      "value": 0.976,
+      "contribution": 0.5177119071956912,
+      "direction": "oil",
+      "rationale": "a deliberate discharge while underway lays oil along the track, so it is elongated; a weather feature has no such axis",
+      "basis": "rule_based"
+    },
+    {
+      "feature": "shape_complexity",
+      "value": 3.5776,
+      "contribution": 0.5151307891122656,
+      "direction": "oil",
+      "rationale": "real slicks are sheared by the drift that moved them and read as filamentary; low-wind cells and biogenic films stay broad and rounded",
+      "basis": "rule_based"
+    },
+    {
+      "feature": "area_km2",
+      "value": 76.9556,
+      "contribution": -0.2874947612507788,
+      "direction": "look-alike",
+      "rationale": "scored as a band, not a direction: below it a formation is speckle, above it the footprint belongs to weather — a wind shadow spans hundreds of km², a discharge does not",
+      "basis": "rule_based"
+    },
+    {
+      "feature": "wind_speed_ms",
+      "value": 6.74,
+      "contribution": 0.2787878787878788,
+      "direction": "oil",
+      "rationale": "wind 6.7 m/s is inside the 3.0-12.0 m/s gate",
+      "basis": "rule_based"
+    }
+  ],
+  "factor_basis": "rule_based",
+  "base_p_oil": 0.25,
+  "evidence_fraction": 0.697,
   "wind_gate_violated": false,
+  "wind_gate_reason": "wind 6.7 m/s is inside the 3.0-12.0 m/s gate",
   "wind_gate_range_ms": [
     3.0,
     12.0
   ],
   "model_version": null,
-  "detector": "authored",
+  "detector": "rule_based",
   "unavailable": {
     "mean_sigma0_db": "no SAR raster in this build; radiometric and texture features need pixels",
     "std_sigma0_db": "no SAR raster in this build; radiometric and texture features need pixels",
@@ -521,10 +560,7 @@
     "glcm_contrast": "no SAR raster in this build; radiometric and texture features need pixels",
     "glcm_entropy": "no SAR raster in this build; radiometric and texture features need pixels",
     "distance_to_coast_km": "no coastline dataset bundled in this build",
-    "p_oil": "LightGBM oil/look-alike discriminator is not trained in this build",
-    "class": "LightGBM oil/look-alike discriminator is not trained in this build",
-    "shap_factors": "LightGBM oil/look-alike discriminator is not trained in this build",
-    "model_version": "no model ran; the slick polygon is authored, not detected"
+    "model_version": "no trained model ran; a rule-based score has no model version"
   },
-  "provenance": "Alpha hull of a real 6 h forward drift run seeded on the authored release corridor. The attribution engine sees only this polygon."
+  "provenance": "Alpha hull of a real 6 h forward drift run seeded on the authored release corridor. The attribution engine sees only this polygon. Features and classification are engine output; the polygon is not."
 }
